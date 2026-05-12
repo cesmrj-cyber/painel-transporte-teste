@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Transporte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface2: #f0efeb;
+    --border: #e2e1dc;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9b9b96;
+    --accent: #1a3a2a;
+    --accent-light: #e8f0ec;
+    --green: #1D9E75;
+    --amber: #BA7517;
+    --red: #A32D2D;
+    --blue: #185FA5;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .logo span {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  header .meta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  /* UPLOAD */
+  #upload-screen { max-width: 560px; margin: 4rem auto; }
+  .upload-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    text-align: center;
+  }
+  .upload-icon {
+    width: 64px; height: 64px;
+    background: var(--accent-light);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 1.5rem;
+  }
+  .upload-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .upload-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.6; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--green); background: #f0faf6; }
+  .drop-zone p { font-size: 13px; color: var(--text2); margin-top: 8px; }
+  .drop-zone .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .divider span { font-size: 12px; color: var(--text3); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  #err { color: var(--red); font-size: 13px; margin-top: 10px; display: none; text-align: center; }
+
+  /* DASHBOARD */
+  #dash-screen { display: none; }
+
+  .dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .dash-header h1 { font-size: 20px; font-weight: 600; }
+  .dash-header .sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* FILTERS */
+  .filters {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .filter-group label { font-size: 12px; color: var(--text2); font-weight: 500; white-space: nowrap; }
+  .filter-group select {
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  /* KPIS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .kpi-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
+  .kpi-accent { border-left: 3px solid var(--green); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; }
+  .tab-btn {
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CHARTS */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-bottom: 1.25rem;
+  }
+  .chart-card h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* TABLE */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  /* BADGES */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+  .b-green { background: #e6f7f1; color: #0d6e4e; }
+  .b-amber { background: #fef3e2; color: #92580d; }
+  .b-red { background: #fce8e8; color: #8b1f1f; }
+
+  /* GRID 2 COL */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media(max-width:640px){ .grid2 { grid-template-columns: 1fr; } }
+
+  .note { font-size: 12px; color: var(--text3); margin-top: 8px; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 12px;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span>🚚</span>
+    Painel de Transporte
+  </div>
+  <div class="meta" id="header-meta"></div>
+</header>
+
+<!-- UPLOAD -->
+<div id="upload-screen">
+  <div class="upload-card">
+    <div class="upload-icon">📊</div>
+    <h2>Relatório de Custos</h2>
+    <p>Importe o arquivo XLSX do Relatório de Custos para visualizar os indicadores de transporte por destino e transportadora.</p>
+
+    <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()">
+      <div style="font-size:32px">📂</div>
+      <p>Clique ou arraste o arquivo XLSX aqui</p>
+      <div class="hint">Colunas usadas: Destino · Transportadora · Entregas · Pedidos · Qtd Pedidos Entregues · Valor (R$) · Custo Total Estimado (R$)</div>
+    </div>
+    <input type="file" id="fi" accept=".xlsx,.xls" style="display:none">
+
+    <div class="divider"><span>ou</span></div>
+    <button class="btn btn-primary" onclick="loadSample()">▶ Carregar dados de exemplo</button>
+    <p id="err"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash-screen">
+  <div class="container">
+
+    <div class="dash-header">
+      <div>
+        <h1>Gestão de Transporte</h1>
+        <div class="sub" id="sub-info">—</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="reset()">↑ Nova planilha</button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Destino</label>
+        <select id="f-dest" onchange="applyFilter()"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Transportadora</label>
+        <select id="f-transp" onchange="applyFilter()"><option value="">Todas</option></select>
+      </div>
+    </div>
+
+    <!-- KPIS -->
+    <div class="kpi-grid" id="kpis"></div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('custos')">Custos por destino</button>
+      <button class="tab-btn" onclick="showTab('valor')">Valor entregue</button>
+      <button class="tab-btn" onclick="showTab('perf')">Performance</button>
+      <button class="tab-btn" onclick="showTab('transp')">Transportadoras</button>
+      <button class="tab-btn" onclick="showTab('det')">Detalhes</button>
+    </div>
+
+    <!-- TAB: CUSTOS -->
+    <div id="t-custos">
+      <div class="chart-card">
+        <h3>Custo total estimado por destino (top 15)</h3>
+        <div class="chart-wrap" id="h-custos" style="height:320px">
+          <canvas id="c-custos" role="img" aria-label="Custo estimado por destino"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: VALOR -->
+    <div id="t-valor" style="display:none">
+      <div class="chart-card">
+        <h3>Valor total entregue por destino (top 15)</h3>
+        <div class="chart-wrap" id="h-valor" style="height:320px">
+          <canvas id="c-valor" role="img" aria-label="Valor entregue por destino"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: PERFORMANCE -->
+    <div id="t-perf" style="display:none">
+      <div class="chart-card">
+        <h3>% de conclusão de entregas por destino (top 15)</h3>
+        <div class="chart-wrap" id="h-perf" style="height:320px">
+          <canvas id="c-perf" role="img" aria-label="Performance por destino"></canvas>
+        </div>
+        <p class="note">Fórmula: Qtd Pedidos Entregues ÷ Total de Pedidos × 100</p>
+      </div>
+    </div>
+
+    <!-- TAB: TRANSPORTADORAS -->
+    <div id="t-transp" style="display:none">
+      <div class="grid2">
+        <div class="chart-card">
+          <h3>Custo estimado por transportadora</h3>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="c-tcusto" role="img" aria-label="Custo por transportadora"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Entregas por transportadora</h3>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="c-tent" role="img" aria-label="Entregas por transportadora"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Transportadora</th>
+              <th>Romaneios</th>
+              <th>Entregas</th>
+              <th>Valor entregue</th>
+              <th>Custo estimado</th>
+              <th>% Conclusão</th>
+            </tr></thead>
+            <tbody id="rank-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DETALHES -->
+    <div id="t-det" style="display:none">
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Destino</th>
+              <th>Transportadora(s)</th>
+              <th>Entregas</th>
+              <th>Pedidos</th>
+              <th>Entregues</th>
+              <th>% Concl.</th>
+              <th>Valor (R$)</th>
+              <th>Custo Est. (R$)</th>
+            </tr></thead>
+            <tbody id="det-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+  <footer>Painel de Gestão de Transporte · Dados carregados localmente, sem envio para servidores.</footer>
+</div>
+
+<script>
+let all = [], fd = [];
+const charts = {};
+const PAL = ['#1a3a2a','#1D9E75','#D85A30','#185FA5','#BA7517','#533AB7','#639922','#D4537E','#A32D2D','#0F6E56'];
+
+function findCol(headers, keys) {
+  for (const h of headers) {
+    if (!h) continue;
+    const hn = String(h).toLowerCase().trim();
+    for (const k of keys) if (hn.includes(k)) return h;
+  }
+  return null;
+}
+
+function parseNum(v) {
+  if (v == null || v === '') return 0;
+  if (typeof v === 'number') return v;
+  return parseFloat(String(v).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+}
+
+function fmtR(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+
+document.getElementById('fi').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => processXLSX(ev.target.result, f.name);
+  r.readAsArrayBuffer(f);
+});
+
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => processXLSX(ev.target.result, f.name);
+  r.readAsArrayBuffer(f);
+});
+
+function processXLSX(buf, name) {
+  try {
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 });
+    // linha 0 = título "Relatório de Custos", linha 1 = cabeçalhos reais
+    const headers = raw[1];
+    if (!headers) { showErr('Cabeçalho não encontrado.'); return; }
+
+    const cDest   = findCol(headers, ['destino']);
+    const cTransp = findCol(headers, ['transportadora']);
+    const cEnt    = findCol(headers, ['entregas']);
+    const cPed    = findCol(headers, ['pedidos']);
+    const cEntQ   = findCol(headers, ['qtd pedidos entregues']);
+    const cVal    = findCol(headers, ['valor (r$)', 'valor (r', 'valor r$']);
+    const cCusto  = findCol(headers, ['custo total estimado', 'custo estimado']);
+
+    const iDest   = headers.indexOf(cDest);
+    const iTransp = headers.indexOf(cTransp);
+    const iEnt    = headers.indexOf(cEnt);
+    const iPed    = headers.indexOf(cPed);
+    const iEntQ   = headers.indexOf(cEntQ);
+    const iVal    = headers.indexOf(cVal);
+    const iCusto  = headers.indexOf(cCusto);
+
+    const mapped = [];
+    for (let i = 2; i < raw.length; i++) {
+      const r = raw[i];
+      if (!r || !r[iDest]) continue;
+      mapped.push({
+        destino: String(r[iDest] || '').trim(),
+        transp:  String(r[iTransp] || '').trim(),
+        ent:     parseNum(r[iEnt]),
+        ped:     parseNum(r[iPed]),
+        entq:    parseNum(r[iEntQ]),
+        val:     parseNum(r[iVal]),
+        custo:   parseNum(r[iCusto]),
+      });
+    }
+    if (!mapped.length) { showErr('Nenhum dado encontrado. Verifique o formato.'); return; }
+
+    document.getElementById('header-meta').textContent = name;
+    all = mapped;
+    init();
+  } catch(e) { showErr('Erro ao ler o arquivo: ' + e.message); }
+}
+
+function loadSample() {
+  const dests = ['ZONA NORTE 1','ZONA NORTE 2','ZONA NORTE 3','ZONA SUL 1','ZONA SUL 2',
+    'ZONA OESTE 1','ZONA OESTE 2','CAXIAS 1','CAXIAS 2','NITEROI 1','NITEROI 2',
+    'NOVA IGUACU 1','NOVA IGUACU 2','SERRANA','PETROPOLIS','MARICA 1','COSTA VERDE'];
+  const transps = ['JSR','ALFA CARGO','GRUPO LLE','MP','MP 2','PM&F','DMD','HJ EXPRESSO'];
+  const d = [];
+  for (let i = 0; i < 120; i++) {
+    const ped = Math.floor(10 + Math.random() * 30);
+    const entq = Math.floor(ped * (0.75 + Math.random() * 0.25));
+    d.push({
+      destino: dests[i % dests.length],
+      transp:  transps[i % transps.length],
+      ent:     Math.floor(5 + Math.random() * 25),
+      ped, entq,
+      val:     Math.round((8000 + Math.random() * 50000) * 100) / 100,
+      custo:   Math.round((400 + Math.random() * 1800) * 100) / 100,
+    });
+  }
+  document.getElementById('header-meta').textContent = 'Dados de exemplo';
+  all = d; init();
+}
+
+function init() {
+  const dests   = [...new Set(all.map(d => d.destino))].sort();
+  const transps = [...new Set(all.map(d => d.transp))].filter(Boolean).sort();
+  fillSel('f-dest', dests);
+  fillSel('f-transp', transps);
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('dash-screen').style.display = 'block';
+  applyFilter();
+}
+
+function fillSel(id, opts) {
+  const s = document.getElementById(id);
+  while (s.options.length > 1) s.remove(1);
+  opts.forEach(o => { const op = document.createElement('option'); op.value = o; op.textContent = o; s.appendChild(op); });
+}
+
+function applyFilter() {
+  const d = document.getElementById('f-dest').value;
+  const t = document.getElementById('f-transp').value;
+  fd = all.filter(r => (!d || r.destino === d) && (!t || r.transp === t));
+  document.getElementById('sub-info').textContent = fd.length + ' romaneios · ' + [...new Set(fd.map(r=>r.destino))].length + ' destinos';
+  renderKPIs(); renderCharts(); renderTable();
+}
+
+function groupBy(data, key, agg) {
+  const m = {};
+  data.forEach(d => { const k = d[key] || '—'; if (!m[k]) m[k] = []; m[k].push(d); });
+  return Object.entries(m).map(([k, rows]) => ({ label: k, rows, value: agg(rows) })).sort((a, b) => b.value - a.value);
+}
+
+function renderKPIs() {
+  const romaneios = fd.length;
+  const totalEnt  = fd.reduce((s, d) => s + d.ent, 0);
+  const totalVal  = fd.reduce((s, d) => s + d.val, 0);
+  const totalCusto= fd.reduce((s, d) => s + d.custo, 0);
+  const totalPed  = fd.reduce((s, d) => s + d.ped, 0);
+  const totalEntQ = fd.reduce((s, d) => s + d.entq, 0);
+  const perf = totalPed > 0 ? Math.round(totalEntQ / totalPed * 100) : 0;
+  const ratio = totalVal > 0 ? (totalCusto / totalVal * 100).toFixed(1) : 0;
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Romaneios</div><div class="kpi-value">${romaneios.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi"><div class="kpi-label">Total de entregas</div><div class="kpi-value">${totalEnt.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi"><div class="kpi-label">Valor entregue</div><div class="kpi-value" style="font-size:17px">${fmtR(totalVal)}</div></div>
+    <div class="kpi kpi-accent"><div class="kpi-label">Custo estimado</div><div class="kpi-value" style="font-size:17px">${fmtR(totalCusto)}</div></div>
+    <div class="kpi"><div class="kpi-label">% Conclusão</div><div class="kpi-value">${perf}%</div><div class="kpi-sub">${totalEntQ.toLocaleString('pt-BR')} de ${totalPed.toLocaleString('pt-BR')} pedidos</div></div>
+    <div class="kpi"><div class="kpi-label">Custo / Valor</div><div class="kpi-value">${ratio}%</div></div>
+  `;
+}
+
+function mkBar(id, labels, data, color, fmtY) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 5, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 11 }, maxRotation: 38, autoSkip: false } },
+        y: { ticks: { callback: fmtY, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderCharts() {
+  const byCusto = groupBy(fd, 'destino', r => r.reduce((s, d) => s + d.custo, 0)).slice(0, 15);
+  const byVal   = groupBy(fd, 'destino', r => r.reduce((s, d) => s + d.val, 0)).slice(0, 15);
+  const byPerf  = groupBy(fd, 'destino', r => {
+    const tp = r.reduce((s, d) => s + d.ped, 0);
+    const tq = r.reduce((s, d) => s + d.entq, 0);
+    return tp > 0 ? Math.round(tq / tp * 100) : 0;
+  }).slice(0, 15);
+
+  const n = Math.max(byCusto.length, byVal.length, byPerf.length, 6);
+  const h = Math.max(280, n * 38 + 60) + 'px';
+  ['h-custos','h-valor','h-perf'].forEach(id => document.getElementById(id).style.height = h);
+
+  mkBar('c-custos', byCusto.map(r => r.label), byCusto.map(r => Math.round(r.value)), PAL[0], v => 'R$'+v.toLocaleString('pt-BR'));
+  mkBar('c-valor',  byVal.map(r => r.label),   byVal.map(r => Math.round(r.value)),   PAL[1], v => 'R$'+v.toLocaleString('pt-BR'));
+
+  const perfColors = byPerf.map(r => r.value >= 90 ? '#1D9E75' : r.value >= 75 ? '#BA7517' : '#A32D2D');
+  if (charts['c-perf']) charts['c-perf'].destroy();
+  charts['c-perf'] = new Chart(document.getElementById('c-perf'), {
+    type: 'bar',
+    data: { labels: byPerf.map(r => r.label), datasets: [{ data: byPerf.map(r => r.value), backgroundColor: perfColors, borderRadius: 5 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 11 }, maxRotation: 38, autoSkip: false } },
+        y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } } }
+      }
+    }
+  });
+
+  const byTCusto = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.custo, 0));
+  const byTEnt   = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.ent, 0));
+  mkBar('c-tcusto', byTCusto.map(r => r.label), byTCusto.map(r => Math.round(r.value)), PAL[2], v => 'R$'+v.toLocaleString('pt-BR'));
+  mkBar('c-tent',   byTEnt.map(r => r.label),   byTEnt.map(r => r.value),               PAL[3], v => v);
+
+  // ranking transportadoras
+  const byT = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.custo, 0));
+  document.getElementById('rank-body').innerHTML = byT.map(g => {
+    const ent  = g.rows.reduce((s, d) => s + d.ent, 0);
+    const val  = g.rows.reduce((s, d) => s + d.val, 0);
+    const ped  = g.rows.reduce((s, d) => s + d.ped, 0);
+    const entq = g.rows.reduce((s, d) => s + d.entq, 0);
+    const perf = ped > 0 ? Math.round(entq / ped * 100) : 0;
+    const cls  = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
+    return `<tr>
+      <td style="font-weight:500">${g.label}</td>
+      <td>${g.rows.length}</td>
+      <td>${ent.toLocaleString('pt-BR')}</td>
+      <td>${fmtR(val)}</td>
+      <td>${fmtR(g.value)}</td>
+      <td><span class="badge ${cls}">${perf}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTable() {
+  const byDest = groupBy(fd, 'destino', r => r.reduce((s, d) => s + d.val, 0));
+  document.getElementById('det-body').innerHTML = byDest.map(g => {
+    const ent  = g.rows.reduce((s, d) => s + d.ent, 0);
+    const ped  = g.rows.reduce((s, d) => s + d.ped, 0);
+    const entq = g.rows.reduce((s, d) => s + d.entq, 0);
+    const val  = g.rows.reduce((s, d) => s + d.val, 0);
+    const custo= g.rows.reduce((s, d) => s + d.custo, 0);
+    const perf = ped > 0 ? Math.round(entq / ped * 100) : 0;
+    const cls  = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
+    const transps = [...new Set(g.rows.map(r => r.transp))].join(', ');
+    return `<tr>
+      <td style="font-weight:500">${g.label}</td>
+      <td style="color:#6b6b67;font-size:12px">${transps}</td>
+      <td>${ent.toLocaleString('pt-BR')}</td>
+      <td>${ped.toLocaleString('pt-BR')}</td>
+      <td>${entq.toLocaleString('pt-BR')}</td>
+      <td><span class="badge ${cls}">${perf}%</span></td>
+      <td>${fmtR(val)}</td>
+      <td>${fmtR(custo)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function showTab(name) {
+  ['custos','valor','perf','transp','det'].forEach(t => {
+    document.getElementById('t-' + t).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((el, i) => {
+    el.classList.toggle('active', ['custos','valor','perf','transp','det'][i] === name);
+  });
+}
+
+function reset() {
+  all = []; fd = [];
+  document.getElementById('upload-screen').style.display = '';
+  document.getElementById('dash-screen').style.display = 'none';
+  document.getElementById('fi').value = '';
+  document.getElementById('header-meta').textContent = '';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.style.display = 'block';
+}
+</script>
+</body>
+</html>

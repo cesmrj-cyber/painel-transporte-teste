@@ -3,268 +3,541 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Transporte</title>
+<title>Grupo LLE · Painel de Transporte</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #f5f5f3;
-    --surface: #ffffff;
-    --surface2: #f0efeb;
-    --border: #e2e1dc;
-    --text: #1a1a18;
-    --text2: #6b6b67;
-    --text3: #9b9b96;
-    --accent: #1a3a2a;
-    --accent-light: #e8f0ec;
-    --green: #1D9E75;
-    --amber: #BA7517;
-    --red: #A32D2D;
-    --blue: #185FA5;
-    --radius: 10px;
-    --radius-lg: 14px;
-  }
+:root {
+  --black:   #0a0a0a;
+  --black2:  #141414;
+  --black3:  #1e1e1e;
+  --black4:  #2a2a2a;
+  --border:  #2e2e2e;
+  --border2: #3a3a3a;
+  --text:    #f0f0ee;
+  --text2:   #9a9a96;
+  --text3:   #5a5a58;
+  --yellow:  #F5A623;
+  --green:   #2E9E52;
+  --blue:    #2D6BE4;
+  --yellow-dim: rgba(245,166,35,0.12);
+  --green-dim:  rgba(46,158,82,0.12);
+  --blue-dim:   rgba(45,107,228,0.12);
+  --red:     #D94040;
+  --amber:   #C07820;
+  --radius:  8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    min-height: 100vh;
-  }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--black);
+  color: var(--text);
+  font-size: 14px;
+  min-height: 100vh;
+}
 
-  /* HEADER */
-  header {
-    background: var(--accent);
-    color: #fff;
-    padding: 0 2rem;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  header .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  header .logo span {
-    width: 28px; height: 28px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-  header .meta {
-    font-size: 12px;
-    color: rgba(255,255,255,0.6);
-  }
+/* ── HEADER ── */
+header {
+  background: var(--black2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 
-  /* LAYOUT */
-  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-  /* UPLOAD */
-  #upload-screen { max-width: 560px; margin: 4rem auto; }
-  .upload-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 2.5rem;
-    text-align: center;
-  }
-  .upload-icon {
-    width: 64px; height: 64px;
-    background: var(--accent-light);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    margin: 0 auto 1.5rem;
-  }
-  .upload-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-  .upload-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.6; }
+.logo-mark {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 28px;
+}
+.logo-mark span {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+}
+.logo-mark span:nth-child(1) { background: var(--yellow); width: 28px; }
+.logo-mark span:nth-child(2) { background: var(--green);  width: 22px; }
+.logo-mark span:nth-child(3) { background: var(--blue);   width: 16px; }
 
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 2rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 1rem;
-  }
-  .drop-zone:hover, .drop-zone.drag { border-color: var(--green); background: #f0faf6; }
-  .drop-zone p { font-size: 13px; color: var(--text2); margin-top: 8px; }
-  .drop-zone .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.logo-text {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.logo-text .grupo { color: var(--text2); font-weight: 500; font-size: 11px; display: block; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+.logo-text .lle { color: var(--text); }
 
-  .divider { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
-  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
-  .divider span { font-size: 12px; color: var(--text3); }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.header-meta {
+  font-size: 12px;
+  color: var(--text3);
+}
+.header-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245,166,35,0.2);
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+.header-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--yellow);
+  border-radius: 50%;
+}
 
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; }
-  .btn:hover { opacity: 0.85; }
-  .btn-primary { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  .btn-sm { padding: 6px 14px; font-size: 12px; }
+/* ── LAYOUT ── */
+.container { max-width: 1240px; margin: 0 auto; padding: 2rem; }
 
-  #err { color: var(--red); font-size: 13px; margin-top: 10px; display: none; text-align: center; }
+/* ── UPLOAD ── */
+#upload-screen { max-width: 520px; margin: 5rem auto; }
 
-  /* DASHBOARD */
-  #dash-screen { display: none; }
+.upload-card {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  text-align: center;
+}
 
-  .dash-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .dash-header h1 { font-size: 20px; font-weight: 600; }
-  .dash-header .sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.upload-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
 
-  /* FILTERS */
-  .filters {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  .filter-group { display: flex; align-items: center; gap: 8px; }
-  .filter-group label { font-size: 12px; color: var(--text2); font-weight: 500; white-space: nowrap; }
-  .filter-group select {
-    font-size: 13px;
-    padding: 6px 10px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-  }
+.upload-card h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.upload-card p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.7; }
 
-  /* KPIS */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-  .kpi {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-  }
-  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-  .kpi-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
-  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
-  .kpi-accent { border-left: 3px solid var(--green); }
+.drop-zone {
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+  background: var(--black3);
+}
+.drop-zone:hover, .drop-zone.drag {
+  border-color: var(--yellow);
+  background: var(--yellow-dim);
+}
+.drop-zone-icon {
+  width: 48px; height: 48px;
+  background: var(--black4);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 12px;
+}
+.drop-zone p { font-size: 13px; color: var(--text2); margin-top: 0; margin-bottom: 4px; }
+.drop-zone .hint { font-size: 11px; color: var(--text3); }
 
-  /* TABS */
-  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; }
-  .tab-btn {
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    background: none;
-    color: var(--text2);
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    white-space: nowrap;
-    transition: color 0.15s;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.divider { display: flex; align-items: center; gap: 12px; margin: 1.25rem 0; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.divider span { font-size: 11px; color: var(--text3); }
 
-  /* CHARTS */
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px 22px;
-    margin-bottom: 1.25rem;
-  }
-  .chart-card h3 { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
-  .chart-wrap { position: relative; width: 100%; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary {
+  background: var(--yellow);
+  color: var(--black);
+  width: 100%;
+  justify-content: center;
+  font-weight: 600;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.btn-outline:hover { color: var(--text); border-color: var(--border2); }
+.btn-sm { padding: 7px 14px; font-size: 12px; }
 
-  /* TABLE */
-  .table-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .table-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    text-align: left;
-    padding: 11px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text2);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
+#err { color: var(--red); font-size: 13px; margin-top: 10px; display: none; text-align: center; }
 
-  /* BADGES */
-  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
-  .b-green { background: #e6f7f1; color: #0d6e4e; }
-  .b-amber { background: #fef3e2; color: #92580d; }
-  .b-red { background: #fce8e8; color: #8b1f1f; }
+/* ── DASHBOARD ── */
+#dash-screen { display: none; }
 
-  /* GRID 2 COL */
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-  @media(max-width:640px){ .grid2 { grid-template-columns: 1fr; } }
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.dash-header h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+.dash-header .sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
 
-  .note { font-size: 12px; color: var(--text3); margin-top: 8px; }
+/* ── FILTERS ── */
+.filters {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-right: 4px;
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-group select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--black3);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filter-group select:focus { border-color: var(--yellow); }
 
-  footer {
-    text-align: center;
-    padding: 2rem;
-    font-size: 12px;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    margin-top: 3rem;
-  }
+/* ── KPIs ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.75rem;
+}
+
+.kpi {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi:hover { border-color: var(--border2); }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 10px;
+}
+.kpi-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+.kpi-yellow { border-left: 2px solid var(--yellow); }
+.kpi-yellow .kpi-value { color: var(--yellow); }
+
+.kpi-green { border-left: 2px solid var(--green); }
+.kpi-green .kpi-value { color: var(--green); }
+
+.kpi-blue { border-left: 2px solid var(--blue); }
+.kpi-blue .kpi-value { color: var(--blue); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.75rem;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--text2); }
+.tab-btn.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+/* ── CHART CARDS ── */
+.chart-card {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 22px 24px;
+  margin-bottom: 1.25rem;
+}
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.chart-card h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── TABLE ── */
+.table-card {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--black3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--black3); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.b-green { background: var(--green-dim); color: #4ade80; border: 1px solid rgba(46,158,82,0.25); }
+.b-amber { background: rgba(192,120,32,0.12); color: #fbbf24; border: 1px solid rgba(192,120,32,0.25); }
+.b-red   { background: rgba(217,64,64,0.12); color: #f87171; border: 1px solid rgba(217,64,64,0.25); }
+
+/* ── GRID ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media(max-width:640px){ .grid2 { grid-template-columns: 1fr; } }
+
+.note { font-size: 12px; color: var(--text3); margin-top: 8px; }
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 12px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+footer strong { color: var(--yellow); }
+
+/* ── RANKING ── */
+.ranking-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 140px 130px 110px 110px 90px;
+  gap: 12px;
+  padding: 8px 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+}
+.ranking-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 140px 130px 110px 110px 90px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.ranking-row:last-child { border-bottom: none; }
+.ranking-row:hover { background: var(--black3); }
+.rank-pos {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text3);
+  text-align: center;
+}
+.rank-pos.top1 { color: var(--yellow); }
+.rank-pos.top2 { color: var(--text2); }
+.rank-pos.top3 { color: #cd7f32; }
+.rank-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rank-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rank-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--black4);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rank-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.rank-val {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.rank-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.rank-metric {
+  font-size: 13px;
+  color: var(--text2);
+}
+@media(max-width: 760px) {
+  .ranking-header { grid-template-columns: 32px 1fr 100px 80px; }
+  .ranking-header .rh-hide { display: none; }
+  .ranking-row { grid-template-columns: 32px 1fr 100px 80px; }
+  .ranking-row .rr-hide { display: none; }
+}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
   <div class="logo">
-    <span>🚚</span>
-    Painel de Transporte
+    <div class="logo-mark">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="logo-text">
+      <span class="grupo">Grupo</span>
+      <span class="lle">LLE</span>
+    </div>
   </div>
-  <div class="meta" id="header-meta"></div>
+  <div class="header-right">
+    <div class="header-meta" id="header-meta"></div>
+    <div class="header-badge" id="header-badge" style="display:none">Painel ativo</div>
+  </div>
 </header>
 
 <!-- UPLOAD -->
 <div id="upload-screen">
   <div class="upload-card">
-    <div class="upload-icon">📊</div>
-    <h2>Relatório de Custos</h2>
+    <div class="upload-brand">
+      <div class="logo-mark" style="transform:scale(1.4); transform-origin:center">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="logo-text" style="font-size:18px">
+        <span class="grupo">Grupo</span>
+        <span class="lle" style="font-size:22px">LLE</span>
+      </div>
+    </div>
+
+    <h2>Painel de Gestão de Transporte</h2>
     <p>Importe o arquivo XLSX do Relatório de Custos para visualizar os indicadores de transporte por destino e transportadora.</p>
 
     <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()">
-      <div style="font-size:32px">📂</div>
+      <div class="drop-zone-icon">📂</div>
       <p>Clique ou arraste o arquivo XLSX aqui</p>
-      <div class="hint">Colunas usadas: Destino · Transportadora · Entregas · Pedidos · Qtd Pedidos Entregues · Valor (R$) · Custo Total Estimado (R$)</div>
+      <div class="hint">Destino · Transportadora · Entregas · Pedidos · Valor (R$) · Custo Estimado</div>
     </div>
     <input type="file" id="fi" accept=".xlsx,.xls" style="display:none">
 
@@ -288,12 +561,13 @@
 
     <!-- FILTROS -->
     <div class="filters">
+      <span class="filter-label">Filtros</span>
       <div class="filter-group">
-        <label>Destino</label>
+        <span style="font-size:12px;color:var(--text2)">Destino</span>
         <select id="f-dest" onchange="applyFilter()"><option value="">Todos</option></select>
       </div>
       <div class="filter-group">
-        <label>Transportadora</label>
+        <span style="font-size:12px;color:var(--text2)">Transportadora</span>
         <select id="f-transp" onchange="applyFilter()"><option value="">Todas</option></select>
       </div>
     </div>
@@ -313,7 +587,9 @@
     <!-- TAB: CUSTOS -->
     <div id="t-custos">
       <div class="chart-card">
-        <h3>Custo total estimado por destino (top 15)</h3>
+        <div class="chart-card-header">
+          <h3>Custo total estimado por destino (top 15)</h3>
+        </div>
         <div class="chart-wrap" id="h-custos" style="height:320px">
           <canvas id="c-custos" role="img" aria-label="Custo estimado por destino"></canvas>
         </div>
@@ -323,7 +599,9 @@
     <!-- TAB: VALOR -->
     <div id="t-valor" style="display:none">
       <div class="chart-card">
-        <h3>Valor total entregue por destino (top 15)</h3>
+        <div class="chart-card-header">
+          <h3>Valor total entregue por destino (top 15)</h3>
+        </div>
         <div class="chart-wrap" id="h-valor" style="height:320px">
           <canvas id="c-valor" role="img" aria-label="Valor entregue por destino"></canvas>
         </div>
@@ -333,7 +611,9 @@
     <!-- TAB: PERFORMANCE -->
     <div id="t-perf" style="display:none">
       <div class="chart-card">
-        <h3>% de conclusão de entregas por destino (top 15)</h3>
+        <div class="chart-card-header">
+          <h3>% de conclusão de entregas por destino (top 15)</h3>
+        </div>
         <div class="chart-wrap" id="h-perf" style="height:320px">
           <canvas id="c-perf" role="img" aria-label="Performance por destino"></canvas>
         </div>
@@ -343,33 +623,44 @@
 
     <!-- TAB: TRANSPORTADORAS -->
     <div id="t-transp" style="display:none">
+
+      <!-- KPIs de resumo transportadoras -->
+      <div class="kpi-grid" id="transp-kpis" style="margin-bottom:1.25rem"></div>
+
+      <!-- Ranking visual -->
+      <div class="chart-card" style="padding:0; overflow:hidden; margin-bottom:1.25rem">
+        <div style="padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px">
+          <h3 style="font-family:'Sora',sans-serif; font-size:13px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.06em; margin:0">Ranking por custo total de frete</h3>
+          <div style="display:flex; gap:16px; font-size:11px; color:var(--text3)">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--yellow)"></span>Maior custo</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green)"></span>Menor custo</span>
+          </div>
+        </div>
+        <div class="ranking-header">
+          <span>#</span>
+          <span>Transportadora</span>
+          <span>Custo total</span>
+          <span class="rh-hide">Custo médio/rom.</span>
+          <span class="rh-hide">Romaneios</span>
+          <span class="rh-hide">Entregas</span>
+          <span>% Concl.</span>
+        </div>
+        <div id="ranking-list"></div>
+      </div>
+
+      <!-- Gráfico comparativo -->
       <div class="grid2">
         <div class="chart-card">
-          <h3>Custo estimado por transportadora</h3>
+          <div class="chart-card-header"><h3>Custo total por transportadora</h3></div>
           <div class="chart-wrap" style="height:260px">
             <canvas id="c-tcusto" role="img" aria-label="Custo por transportadora"></canvas>
           </div>
         </div>
         <div class="chart-card">
-          <h3>Entregas por transportadora</h3>
+          <div class="chart-card-header"><h3>Custo médio por romaneio</h3></div>
           <div class="chart-wrap" style="height:260px">
-            <canvas id="c-tent" role="img" aria-label="Entregas por transportadora"></canvas>
+            <canvas id="c-tent" role="img" aria-label="Custo médio por romaneio por transportadora"></canvas>
           </div>
-        </div>
-      </div>
-      <div class="table-card">
-        <div class="table-scroll">
-          <table>
-            <thead><tr>
-              <th>Transportadora</th>
-              <th>Romaneios</th>
-              <th>Entregas</th>
-              <th>Valor entregue</th>
-              <th>Custo estimado</th>
-              <th>% Conclusão</th>
-            </tr></thead>
-            <tbody id="rank-body"></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -395,14 +686,22 @@
       </div>
     </div>
 
-  </div><!-- /container -->
-  <footer>Painel de Gestão de Transporte · Dados carregados localmente, sem envio para servidores.</footer>
+  </div>
+  <footer>Painel de Gestão de Transporte · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
 </div>
 
 <script>
 let all = [], fd = [];
 const charts = {};
-const PAL = ['#1a3a2a','#1D9E75','#D85A30','#185FA5','#BA7517','#533AB7','#639922','#D4537E','#A32D2D','#0F6E56'];
+
+const PAL_YELLOW = '#F5A623';
+const PAL_GREEN  = '#2E9E52';
+const PAL_BLUE   = '#2D6BE4';
+const PAL_DIM    = ['#F5A623','#2E9E52','#2D6BE4','#c07820','#1a6e38','#1a4fb0','#d97706','#059669','#3b82f6','#92400e'];
+
+const CHART_DEFAULTS = {
+  color: { grid: 'rgba(255,255,255,0.05)', tick: '#5a5a58' }
+};
 
 function findCol(headers, keys) {
   for (const h of headers) {
@@ -412,13 +711,11 @@ function findCol(headers, keys) {
   }
   return null;
 }
-
 function parseNum(v) {
   if (v == null || v === '') return 0;
   if (typeof v === 'number') return v;
   return parseFloat(String(v).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 }
-
 function fmtR(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
 
 document.getElementById('fi').addEventListener('change', e => {
@@ -444,67 +741,51 @@ function processXLSX(buf, name) {
     const wb = XLSX.read(buf, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { defval: '', header: 1 });
-    // linha 0 = título "Relatório de Custos", linha 1 = cabeçalhos reais
     const headers = raw[1];
     if (!headers) { showErr('Cabeçalho não encontrado.'); return; }
-
     const cDest   = findCol(headers, ['destino']);
     const cTransp = findCol(headers, ['transportadora']);
     const cEnt    = findCol(headers, ['entregas']);
     const cPed    = findCol(headers, ['pedidos']);
     const cEntQ   = findCol(headers, ['qtd pedidos entregues']);
     const cVal    = findCol(headers, ['valor (r$)', 'valor (r', 'valor r$']);
-    const cCusto  = findCol(headers, ['custo total estimado', 'custo estimado']);
-
+    const cCusto      = findCol(headers, ['custo total estimado', 'custo estimado']);
+    const cCustoReal  = findCol(headers, ['custo total realizado']);
     const iDest   = headers.indexOf(cDest);
     const iTransp = headers.indexOf(cTransp);
     const iEnt    = headers.indexOf(cEnt);
     const iPed    = headers.indexOf(cPed);
     const iEntQ   = headers.indexOf(cEntQ);
     const iVal    = headers.indexOf(cVal);
-    const iCusto  = headers.indexOf(cCusto);
-
+    const iCusto      = headers.indexOf(cCusto);
+    const iCustoReal  = cCustoReal ? headers.indexOf(cCustoReal) : -1;
     const mapped = [];
     for (let i = 2; i < raw.length; i++) {
       const r = raw[i];
       if (!r || !r[iDest]) continue;
-      mapped.push({
-        destino: String(r[iDest] || '').trim(),
-        transp:  String(r[iTransp] || '').trim(),
-        ent:     parseNum(r[iEnt]),
-        ped:     parseNum(r[iPed]),
-        entq:    parseNum(r[iEntQ]),
-        val:     parseNum(r[iVal]),
-        custo:   parseNum(r[iCusto]),
-      });
+      const custoEst  = parseNum(r[iCusto]);
+      const custoReal = iCustoReal >= 0 ? parseNum(r[iCustoReal]) : 0;
+      mapped.push({ destino: String(r[iDest]||'').trim(), transp: String(r[iTransp]||'').trim(), ent: parseNum(r[iEnt]), ped: parseNum(r[iPed]), entq: parseNum(r[iEntQ]), val: parseNum(r[iVal]), custo: custoReal > 0 ? custoReal : custoEst, custoEst, custoReal });
     }
-    if (!mapped.length) { showErr('Nenhum dado encontrado. Verifique o formato.'); return; }
-
-    document.getElementById('header-meta').textContent = name;
-    all = mapped;
-    init();
+    if (!mapped.length) { showErr('Nenhum dado encontrado.'); return; }
+    const temRealizado = mapped.some(d => d.custoReal > 0);
+    document.getElementById('header-meta').textContent = name + (temRealizado ? ' · usando custo realizado' : ' · usando custo estimado');
+    document.getElementById('header-badge').style.display = 'flex';
+    all = mapped; init();
   } catch(e) { showErr('Erro ao ler o arquivo: ' + e.message); }
 }
 
 function loadSample() {
-  const dests = ['ZONA NORTE 1','ZONA NORTE 2','ZONA NORTE 3','ZONA SUL 1','ZONA SUL 2',
-    'ZONA OESTE 1','ZONA OESTE 2','CAXIAS 1','CAXIAS 2','NITEROI 1','NITEROI 2',
-    'NOVA IGUACU 1','NOVA IGUACU 2','SERRANA','PETROPOLIS','MARICA 1','COSTA VERDE'];
+  const dests = ['ZONA NORTE 1','ZONA NORTE 2','ZONA NORTE 3','ZONA SUL 1','ZONA SUL 2','ZONA OESTE 1','ZONA OESTE 2','CAXIAS 1','CAXIAS 2','NITEROI 1','NITEROI 2','NOVA IGUACU 1','NOVA IGUACU 2','SERRANA','PETROPOLIS','MARICA 1','COSTA VERDE'];
   const transps = ['JSR','ALFA CARGO','GRUPO LLE','MP','MP 2','PM&F','DMD','HJ EXPRESSO'];
   const d = [];
   for (let i = 0; i < 120; i++) {
     const ped = Math.floor(10 + Math.random() * 30);
     const entq = Math.floor(ped * (0.75 + Math.random() * 0.25));
-    d.push({
-      destino: dests[i % dests.length],
-      transp:  transps[i % transps.length],
-      ent:     Math.floor(5 + Math.random() * 25),
-      ped, entq,
-      val:     Math.round((8000 + Math.random() * 50000) * 100) / 100,
-      custo:   Math.round((400 + Math.random() * 1800) * 100) / 100,
-    });
+    d.push({ destino: dests[i % dests.length], transp: transps[i % transps.length], ent: Math.floor(5 + Math.random() * 25), ped, entq, val: Math.round((8000 + Math.random() * 50000) * 100) / 100, custo: Math.round((400 + Math.random() * 1800) * 100) / 100 });
   }
   document.getElementById('header-meta').textContent = 'Dados de exemplo';
+  document.getElementById('header-badge').style.display = 'flex';
   all = d; init();
 }
 
@@ -545,14 +826,15 @@ function renderKPIs() {
   const totalCusto= fd.reduce((s, d) => s + d.custo, 0);
   const totalPed  = fd.reduce((s, d) => s + d.ped, 0);
   const totalEntQ = fd.reduce((s, d) => s + d.entq, 0);
-  const perf = totalPed > 0 ? Math.round(totalEntQ / totalPed * 100) : 0;
+  const perf  = totalPed > 0 ? Math.round(totalEntQ / totalPed * 100) : 0;
   const ratio = totalVal > 0 ? (totalCusto / totalVal * 100).toFixed(1) : 0;
+  const perfClass = perf >= 90 ? 'kpi-green' : perf >= 75 ? '' : 'kpi';
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="kpi-label">Romaneios</div><div class="kpi-value">${romaneios.toLocaleString('pt-BR')}</div></div>
     <div class="kpi"><div class="kpi-label">Total de entregas</div><div class="kpi-value">${totalEnt.toLocaleString('pt-BR')}</div></div>
-    <div class="kpi"><div class="kpi-label">Valor entregue</div><div class="kpi-value" style="font-size:17px">${fmtR(totalVal)}</div></div>
-    <div class="kpi kpi-accent"><div class="kpi-label">Custo estimado</div><div class="kpi-value" style="font-size:17px">${fmtR(totalCusto)}</div></div>
-    <div class="kpi"><div class="kpi-label">% Conclusão</div><div class="kpi-value">${perf}%</div><div class="kpi-sub">${totalEntQ.toLocaleString('pt-BR')} de ${totalPed.toLocaleString('pt-BR')} pedidos</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">Valor entregue</div><div class="kpi-value" style="font-size:18px">${fmtR(totalVal)}</div></div>
+    <div class="kpi kpi-yellow"><div class="kpi-label">Custo estimado</div><div class="kpi-value" style="font-size:18px">${fmtR(totalCusto)}</div></div>
+    <div class="kpi kpi-green"><div class="kpi-label">% Conclusão</div><div class="kpi-value">${perf}%</div><div class="kpi-sub">${totalEntQ.toLocaleString('pt-BR')} de ${totalPed.toLocaleString('pt-BR')} pedidos</div></div>
     <div class="kpi"><div class="kpi-label">Custo / Valor</div><div class="kpi-value">${ratio}%</div></div>
   `;
 }
@@ -566,8 +848,8 @@ function mkBar(id, labels, data, color, fmtY) {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { font: { size: 11 }, maxRotation: 38, autoSkip: false } },
-        y: { ticks: { callback: fmtY, font: { size: 11 } } }
+        x: { ticks: { font: { size: 11 }, color: CHART_DEFAULTS.color.tick, maxRotation: 38, autoSkip: false }, grid: { color: CHART_DEFAULTS.color.grid } },
+        y: { ticks: { callback: fmtY, font: { size: 11 }, color: CHART_DEFAULTS.color.tick }, grid: { color: CHART_DEFAULTS.color.grid } }
       }
     }
   });
@@ -583,13 +865,13 @@ function renderCharts() {
   }).slice(0, 15);
 
   const n = Math.max(byCusto.length, byVal.length, byPerf.length, 6);
-  const h = Math.max(280, n * 38 + 60) + 'px';
+  const h = Math.max(300, n * 38 + 60) + 'px';
   ['h-custos','h-valor','h-perf'].forEach(id => document.getElementById(id).style.height = h);
 
-  mkBar('c-custos', byCusto.map(r => r.label), byCusto.map(r => Math.round(r.value)), PAL[0], v => 'R$'+v.toLocaleString('pt-BR'));
-  mkBar('c-valor',  byVal.map(r => r.label),   byVal.map(r => Math.round(r.value)),   PAL[1], v => 'R$'+v.toLocaleString('pt-BR'));
+  mkBar('c-custos', byCusto.map(r => r.label), byCusto.map(r => Math.round(r.value)), PAL_YELLOW, v => 'R$'+v.toLocaleString('pt-BR'));
+  mkBar('c-valor',  byVal.map(r => r.label),   byVal.map(r => Math.round(r.value)),   PAL_BLUE,   v => 'R$'+v.toLocaleString('pt-BR'));
 
-  const perfColors = byPerf.map(r => r.value >= 90 ? '#1D9E75' : r.value >= 75 ? '#BA7517' : '#A32D2D');
+  const perfColors = byPerf.map(r => r.value >= 90 ? '#2E9E52' : r.value >= 75 ? '#C07820' : '#D94040');
   if (charts['c-perf']) charts['c-perf'].destroy();
   charts['c-perf'] = new Chart(document.getElementById('c-perf'), {
     type: 'bar',
@@ -598,58 +880,101 @@ function renderCharts() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { font: { size: 11 }, maxRotation: 38, autoSkip: false } },
-        y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } } }
+        x: { ticks: { font: { size: 11 }, color: CHART_DEFAULTS.color.tick, maxRotation: 38, autoSkip: false }, grid: { color: CHART_DEFAULTS.color.grid } },
+        y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 }, color: CHART_DEFAULTS.color.tick }, grid: { color: CHART_DEFAULTS.color.grid } }
       }
     }
   });
 
   const byTCusto = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.custo, 0));
   const byTEnt   = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.ent, 0));
-  mkBar('c-tcusto', byTCusto.map(r => r.label), byTCusto.map(r => Math.round(r.value)), PAL[2], v => 'R$'+v.toLocaleString('pt-BR'));
-  mkBar('c-tent',   byTEnt.map(r => r.label),   byTEnt.map(r => r.value),               PAL[3], v => v);
 
-  // ranking transportadoras
-  const byT = groupBy(fd, 'transp', r => r.reduce((s, d) => s + d.custo, 0));
-  document.getElementById('rank-body').innerHTML = byT.map(g => {
-    const ent  = g.rows.reduce((s, d) => s + d.ent, 0);
-    const val  = g.rows.reduce((s, d) => s + d.val, 0);
-    const ped  = g.rows.reduce((s, d) => s + d.ped, 0);
-    const entq = g.rows.reduce((s, d) => s + d.entq, 0);
-    const perf = ped > 0 ? Math.round(entq / ped * 100) : 0;
-    const cls  = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
-    return `<tr>
-      <td style="font-weight:500">${g.label}</td>
-      <td>${g.rows.length}</td>
-      <td>${ent.toLocaleString('pt-BR')}</td>
-      <td>${fmtR(val)}</td>
-      <td>${fmtR(g.value)}</td>
-      <td><span class="badge ${cls}">${perf}%</span></td>
-    </tr>`;
+  const multiColors = (arr) => arr.map((_, i) => [PAL_YELLOW, PAL_GREEN, PAL_BLUE, '#c07820', '#1a6e38', '#1a4fb0', '#d97706', '#059669'][i % 8]);
+
+  if (charts['c-tcusto']) charts['c-tcusto'].destroy();
+  charts['c-tcusto'] = new Chart(document.getElementById('c-tcusto'), {
+    type: 'bar',
+    data: { labels: byTCusto.map(r => r.label), datasets: [{ data: byTCusto.map(r => Math.round(r.value)), backgroundColor: multiColors(byTCusto), borderRadius: 5, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 11 }, color: CHART_DEFAULTS.color.tick, maxRotation: 38, autoSkip: false }, grid: { color: CHART_DEFAULTS.color.grid } }, y: { ticks: { callback: v => 'R$'+v.toLocaleString('pt-BR'), font: { size: 11 }, color: CHART_DEFAULTS.color.tick }, grid: { color: CHART_DEFAULTS.color.grid } } } }
+  });
+
+  // Custo médio por romaneio
+  const byTMediaRom = groupBy(fd, 'transp', r => {
+    const total = r.reduce((s, d) => s + d.custo, 0);
+    return r.length > 0 ? Math.round(total / r.length) : 0;
+  });
+  if (charts['c-tent']) charts['c-tent'].destroy();
+  charts['c-tent'] = new Chart(document.getElementById('c-tent'), {
+    type: 'bar',
+    data: { labels: byTMediaRom.map(r => r.label), datasets: [{ data: byTMediaRom.map(r => r.value), backgroundColor: multiColors(byTMediaRom), borderRadius: 5, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 11 }, color: CHART_DEFAULTS.color.tick, maxRotation: 38, autoSkip: false }, grid: { color: CHART_DEFAULTS.color.grid } }, y: { ticks: { callback: v => 'R$'+v.toLocaleString('pt-BR'), font: { size: 11 }, color: CHART_DEFAULTS.color.tick }, grid: { color: CHART_DEFAULTS.color.grid } } } }
+  });
+
+  // KPIs de transportadoras
+  const nTransp = byTCusto.length;
+  const totalCustoT = byTCusto.reduce((s, g) => s + g.value, 0);
+  const maiorT = byTCusto[0];
+  const menorT = byTCusto[byTCusto.length - 1];
+  document.getElementById('transp-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Transportadoras</div><div class="kpi-value">${nTransp}</div></div>
+    <div class="kpi kpi-yellow"><div class="kpi-label">Maior custo total</div><div class="kpi-value" style="font-size:16px">${maiorT ? fmtR(maiorT.value) : '—'}</div><div class="kpi-sub">${maiorT ? maiorT.label : ''}</div></div>
+    <div class="kpi kpi-green"><div class="kpi-label">Menor custo total</div><div class="kpi-value" style="font-size:16px">${menorT ? fmtR(menorT.value) : '—'}</div><div class="kpi-sub">${menorT ? menorT.label : ''}</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">Custo total geral</div><div class="kpi-value" style="font-size:16px">${fmtR(totalCustoT)}</div></div>
+  `;
+
+  // Ranking visual
+  const maxCusto = byTCusto[0] ? byTCusto[0].value : 1;
+  const rankColors = ['#F5A623','#9a9a96','#cd7f32'];
+  document.getElementById('ranking-list').innerHTML = byTCusto.map((g, i) => {
+    const ent   = g.rows.reduce((s, d) => s + d.ent, 0);
+    const ped   = g.rows.reduce((s, d) => s + d.ped, 0);
+    const entq  = g.rows.reduce((s, d) => s + d.entq, 0);
+    const perf  = ped > 0 ? Math.round(entq / ped * 100) : 0;
+    const cls   = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
+    const mediaRom = g.rows.length > 0 ? Math.round(g.value / g.rows.length) : 0;
+    const pct   = Math.round(g.value / maxCusto * 100);
+    const posClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    // bar color: gradient from yellow (1st) to green (last)
+    const ratio = byTCusto.length > 1 ? i / (byTCusto.length - 1) : 0;
+    const r1 = Math.round(245 + (46 - 245) * ratio);
+    const g1 = Math.round(166 + (158 - 166) * ratio);
+    const b1 = Math.round(35  + (82  - 35)  * ratio);
+    const barColor = `rgb(${r1},${g1},${b1})`;
+    return `<div class="ranking-row">
+      <div class="rank-pos ${posClass}">${i + 1}</div>
+      <div>
+        <div class="rank-name">${g.label}</div>
+        <div class="rank-sub">${g.rows.length} romaneio${g.rows.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        </div>
+        <div class="rank-val" style="margin-top:4px">${fmtR(g.value)}</div>
+      </div>
+      <div class="rr-hide">
+        <div class="rank-val">${fmtR(mediaRom)}</div>
+        <div class="rank-sub">por romaneio</div>
+      </div>
+      <div class="rank-metric rr-hide">${g.rows.length}</div>
+      <div class="rank-metric rr-hide">${ent.toLocaleString('pt-BR')}</div>
+      <div><span class="badge ${cls}">${perf}%</span></div>
+    </div>`;
   }).join('');
 }
 
 function renderTable() {
   const byDest = groupBy(fd, 'destino', r => r.reduce((s, d) => s + d.val, 0));
   document.getElementById('det-body').innerHTML = byDest.map(g => {
-    const ent  = g.rows.reduce((s, d) => s + d.ent, 0);
-    const ped  = g.rows.reduce((s, d) => s + d.ped, 0);
-    const entq = g.rows.reduce((s, d) => s + d.entq, 0);
-    const val  = g.rows.reduce((s, d) => s + d.val, 0);
-    const custo= g.rows.reduce((s, d) => s + d.custo, 0);
-    const perf = ped > 0 ? Math.round(entq / ped * 100) : 0;
-    const cls  = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
+    const ent   = g.rows.reduce((s, d) => s + d.ent, 0);
+    const ped   = g.rows.reduce((s, d) => s + d.ped, 0);
+    const entq  = g.rows.reduce((s, d) => s + d.entq, 0);
+    const val   = g.rows.reduce((s, d) => s + d.val, 0);
+    const custo = g.rows.reduce((s, d) => s + d.custo, 0);
+    const perf  = ped > 0 ? Math.round(entq / ped * 100) : 0;
+    const cls   = perf >= 90 ? 'b-green' : perf >= 75 ? 'b-amber' : 'b-red';
     const transps = [...new Set(g.rows.map(r => r.transp))].join(', ');
-    return `<tr>
-      <td style="font-weight:500">${g.label}</td>
-      <td style="color:#6b6b67;font-size:12px">${transps}</td>
-      <td>${ent.toLocaleString('pt-BR')}</td>
-      <td>${ped.toLocaleString('pt-BR')}</td>
-      <td>${entq.toLocaleString('pt-BR')}</td>
-      <td><span class="badge ${cls}">${perf}%</span></td>
-      <td>${fmtR(val)}</td>
-      <td>${fmtR(custo)}</td>
-    </tr>`;
+    return `<tr><td style="font-weight:500">${g.label}</td><td style="color:var(--text2);font-size:12px">${transps}</td><td>${ent.toLocaleString('pt-BR')}</td><td>${ped.toLocaleString('pt-BR')}</td><td>${entq.toLocaleString('pt-BR')}</td><td><span class="badge ${cls}">${perf}%</span></td><td>${fmtR(val)}</td><td>${fmtR(custo)}</td></tr>`;
   }).join('');
 }
 
@@ -668,6 +993,7 @@ function reset() {
   document.getElementById('dash-screen').style.display = 'none';
   document.getElementById('fi').value = '';
   document.getElementById('header-meta').textContent = '';
+  document.getElementById('header-badge').style.display = 'none';
 }
 
 function showErr(msg) {

@@ -467,17 +467,6 @@ footer strong { color: var(--yellow); }
       <!-- KPIs críticas -->
       <div class="kpi-grid" id="criticas-kpis" style="margin-bottom:1.25rem"></div>
 
-      <!-- Gráfico % custo por rota -->
-      <div class="chart-card" style="margin-bottom:1.25rem">
-        <div class="chart-card-header">
-          <h3>% custo / valor por destino — todas as rotas</h3>
-          <span style="font-size:11px;color:var(--text3)">Linha vermelha = limite 3%</span>
-        </div>
-        <div class="chart-wrap" id="h-criticas-chart" style="height:300px">
-          <canvas id="c-criticas-chart"></canvas>
-        </div>
-      </div>
-
       <!-- Tabela críticas -->
       <div class="chart-card" style="padding:0;overflow:hidden">
         <div class="critical-header">
@@ -929,60 +918,6 @@ function renderCriticas() {
     <div class="kpi"><div class="kpi-label">Média % custo</div><div class="kpi-value">${mediaPct.toFixed(1)}%</div><div class="kpi-sub">todas as rotas</div></div>
     <div class="kpi kpi-yellow"><div class="kpi-label">Custo crítico total</div><div class="kpi-value" style="font-size:18px">${fmtR(criticas.reduce((s,r)=>s+r.custo,0))}</div></div>
   `;
-
-  // Gráfico % custo todas as rotas
-  const chartLabels = comPct.map(r => r.label);
-  const chartData   = comPct.map(r => parseFloat(r.pct.toFixed(2)));
-  const chartColors = comPct.map(r => r.pct > 3 ? PAL_RED : r.pct > 2 ? '#C07820' : PAL_GREEN);
-
-  const nR = Math.max(chartLabels.length, 6);
-  document.getElementById('h-criticas-chart').style.height = Math.max(280, nR*32+60)+'px';
-
-  if (charts['c-criticas-chart']) charts['c-criticas-chart'].destroy();
-  charts['c-criticas-chart'] = new Chart(document.getElementById('c-criticas-chart'), {
-    type: 'bar',
-    data: {
-      labels: chartLabels,
-      datasets: [{
-        data: chartData,
-        backgroundColor: chartColors,
-        borderRadius: 4,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        annotation: {}
-      },
-      scales: {
-        x: { ticks:{font:{size:10},color:CHART_DEFAULTS.color.tick,maxRotation:45,autoSkip:false}, grid:{color:CHART_DEFAULTS.color.grid} },
-        y: {
-          ticks: { callback: v => v.toFixed(1)+'%', font:{size:11}, color:CHART_DEFAULTS.color.tick },
-          grid: { color: (ctx) => ctx.tick.value === 3 ? 'rgba(217,64,64,0.5)' : CHART_DEFAULTS.color.grid },
-          afterDataLimits: axis => { if (axis.max < 4) axis.max = 4; }
-        }
-      }
-    },
-    plugins: [{
-      id: 'limitLine',
-      afterDraw(chart) {
-        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
-        const y3 = y.getPixelForValue(3);
-        ctx.save();
-        ctx.strokeStyle = 'rgba(217,64,64,0.7)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath(); ctx.moveTo(left, y3); ctx.lineTo(right, y3); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(217,64,64,0.8)';
-        ctx.font = '11px DM Sans, sans-serif';
-        ctx.fillText('3% limite', right - 70, y3 - 5);
-        ctx.restore();
-      }
-    }]
-  });
 
   // Badge e tabela
   document.getElementById('criticas-badge').textContent = nCriticas + (nCriticas===1?' rota crítica':' rotas críticas');

@@ -317,8 +317,6 @@ footer strong { color: var(--yellow); }
   line-height: 1;
 }
 
-/* Módulo SAC */
-#module-sac { display: none; }
 .sac-upload-area { max-width: 520px; margin: 0 auto; }
 </style>
 </head>
@@ -580,7 +578,7 @@ footer strong { color: var(--yellow); }
     </div>
 
     <!-- TAB: CHAMADOS (vive aqui diretamente) -->
-    <div id="t-chamados">
+    <div id="t-chamados" style="display:block">
       <div id="chamados-upload-area" class="chart-card" style="text-align:center;padding:2rem">
         <div style="font-size:28px;margin-bottom:12px">🎫</div>
         <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin-bottom:8px">Base de Chamados</div>
@@ -1192,12 +1190,11 @@ function showSacTab(name) {
 function switchModule(mod) {
   const isTransp = mod === 'transp';
 
-  // Atualiza botões do menu
+  // Botões
   document.getElementById('btn-transp').className = 'module-btn' + (isTransp ? ' active-transp' : '');
   document.getElementById('btn-sac').className    = 'module-btn' + (!isTransp ? ' active-sac' : '');
 
   if (isTransp) {
-    // Mostra o estado correto do módulo de transporte
     document.getElementById('module-sac').style.display = 'none';
     if (all.length > 0) {
       document.getElementById('upload-screen').style.display = 'none';
@@ -1207,12 +1204,19 @@ function switchModule(mod) {
       document.getElementById('dash-screen').style.display   = 'none';
     }
   } else {
-    // Módulo SAC
     document.getElementById('upload-screen').style.display = 'none';
     document.getElementById('dash-screen').style.display   = 'none';
     document.getElementById('module-sac').style.display    = '';
-    // Inicializa a aba de chamados
-    showSacTab('chamados');
+    // Garante que a aba chamados está visível
+    document.getElementById('t-chamados').style.display         = '';
+    document.getElementById('t-chamados-cruzado').style.display = 'none';
+    // Atualiza visual das tabs SAC
+    document.getElementById('sac-tab-chamados').classList.add('active');
+    document.getElementById('sac-tab-chamados').style.color = '#a78bfa';
+    document.getElementById('sac-tab-chamados').style.borderBottomColor = '#a78bfa';
+    document.getElementById('sac-tab-cruzado').classList.remove('active');
+    document.getElementById('sac-tab-cruzado').style.color = '';
+    document.getElementById('sac-tab-cruzado').style.borderBottomColor = '';
   }
 }
 

@@ -559,10 +559,28 @@ footer strong { color: var(--yellow); }
       </div>
     </div>
 
-    <!-- TAB: CHAMADOS -->
-    <div id="t-chamados" style="display:none">
+  </div><!-- /.container -->
+  <footer>Painel de Gestão de Transporte · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
+</div><!-- /#dash-screen -->
 
-      <!-- Upload de chamados -->
+<!-- ── MÓDULO SAC ──────────────────────────────────────────────────────────── -->
+<div id="module-sac" style="display:none">
+  <div class="container">
+    <div class="dash-header">
+      <div>
+        <h1>SAC — Chamados & Ocorrências</h1>
+        <div class="sub" id="sac-sub-info">Importe a base de chamados para começar</div>
+      </div>
+    </div>
+
+    <!-- TABS SAC -->
+    <div class="tabs">
+      <button class="tab-btn active" id="sac-tab-chamados" onclick="showSacTab('chamados')" style="color:#a78bfa;border-bottom-color:#a78bfa">Chamados SAC</button>
+      <button class="tab-btn" id="sac-tab-cruzado" onclick="showSacTab('chamados-cruzado')">Chamados × Entregas</button>
+    </div>
+
+    <!-- TAB: CHAMADOS (vive aqui diretamente) -->
+    <div id="t-chamados">
       <div id="chamados-upload-area" class="chart-card" style="text-align:center;padding:2rem">
         <div style="font-size:28px;margin-bottom:12px">🎫</div>
         <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin-bottom:8px">Base de Chamados</div>
@@ -574,13 +592,8 @@ footer strong { color: var(--yellow); }
         </div>
         <input type="file" id="fi-chamados" accept=".xlsx,.xls" style="display:none">
       </div>
-
-      <!-- Dashboard chamados (oculto até importar) -->
       <div id="chamados-dash" style="display:none">
-        <!-- KPIs -->
         <div class="kpi-grid" id="ch-kpis" style="margin-bottom:1.25rem"></div>
-
-        <!-- Linha 1: por tipo + por status -->
         <div class="grid2" style="margin-bottom:1.25rem">
           <div class="chart-card">
             <div class="chart-card-header"><h3>Chamados por tipo</h3></div>
@@ -591,8 +604,6 @@ footer strong { color: var(--yellow); }
             <div class="chart-wrap" style="height:260px"><canvas id="c-ch-status"></canvas></div>
           </div>
         </div>
-
-        <!-- Ranking transportadoras -->
         <div class="chart-card" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
           <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Ranking de chamados por transportadora</h3>
@@ -603,8 +614,6 @@ footer strong { color: var(--yellow); }
           </div>
           <div id="ch-ranking-transp"></div>
         </div>
-
-        <!-- Regiões críticas -->
         <div class="chart-card" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
           <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Regiões mais críticas — top chamados por cidade</h3>
@@ -615,8 +624,6 @@ footer strong { color: var(--yellow); }
           </div>
           <div id="ch-regioes"></div>
         </div>
-
-        <!-- Ranking por motivo/tipo detalhado -->
         <div class="chart-card" style="padding:0;overflow:hidden">
           <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border)">
             <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Criticidade por tipo de chamado</h3>
@@ -633,7 +640,7 @@ footer strong { color: var(--yellow); }
     <div id="t-chamados-cruzado" style="display:none">
       <div id="cruzado-sem-dados" class="chart-card" style="text-align:center;padding:3rem">
         <div style="font-size:32px;margin-bottom:12px">🔗</div>
-        <p style="font-size:14px;color:var(--text2)">Importe a base de chamados na aba <strong style="color:var(--blue)">Chamados</strong> e o relatório de transporte para visualizar o cruzamento.</p>
+        <p style="font-size:14px;color:var(--text2)">Importe a base de chamados na aba <strong style="color:#a78bfa">Chamados SAC</strong> e o relatório de transporte para visualizar o cruzamento.</p>
       </div>
       <div id="cruzado-dash" style="display:none">
         <div class="kpi-grid" id="cruzado-kpis" style="margin-bottom:1.25rem"></div>
@@ -659,28 +666,6 @@ footer strong { color: var(--yellow); }
       </div>
     </div>
 
-  </div><!-- /.container -->
-  <footer>Painel de Gestão de Transporte · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
-</div><!-- /#dash-screen -->
-
-<!-- ── MÓDULO SAC ──────────────────────────────────────────────────────────── -->
-<div id="module-sac" style="display:none">
-  <div class="container">
-    <div class="dash-header">
-      <div>
-        <h1>SAC — Chamados & Ocorrências</h1>
-        <div class="sub" id="sac-sub-info">Importe a base de chamados para começar</div>
-      </div>
-    </div>
-
-    <!-- TABS SAC -->
-    <div class="tabs">
-      <button class="tab-btn active" id="sac-tab-chamados" onclick="showSacTab('chamados')" style="color:#a78bfa;border-bottom-color:#a78bfa">Chamados SAC</button>
-      <button class="tab-btn" id="sac-tab-cruzado" onclick="showSacTab('chamados-cruzado')">Chamados × Entregas</button>
-    </div>
-
-    <!-- Conteúdo dinâmico SAC (os divs t-chamados e t-chamados-cruzado são movidos aqui pelo JS) -->
-    <div id="sac-tab-content"></div>
   </div>
   <footer>SAC · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
 </div>
@@ -1191,59 +1176,44 @@ function showTab(name) {
 }
 
 function showSacTab(name) {
-  // Move os divs de chamados para dentro do sac-tab-content
-  const content = document.getElementById('sac-tab-content');
-  ['chamados','chamados-cruzado'].forEach(t => {
-    const el = document.getElementById('t-'+t);
-    if (el) {
-      content.appendChild(el);
-      el.style.display = t===name ? '' : 'none';
-    }
+  document.getElementById('t-chamados').style.display          = name === 'chamados' ? '' : 'none';
+  document.getElementById('t-chamados-cruzado').style.display  = name === 'chamados-cruzado' ? '' : 'none';
+
+  const tabs = { 'chamados': 'sac-tab-chamados', 'chamados-cruzado': 'sac-tab-cruzado' };
+  Object.entries(tabs).forEach(([key, id]) => {
+    const btn = document.getElementById(id);
+    const isActive = key === name;
+    btn.classList.toggle('active', isActive);
+    btn.style.color = isActive ? '#a78bfa' : '';
+    btn.style.borderBottomColor = isActive ? '#a78bfa' : '';
   });
-  // Atualiza tabs SAC
-  document.getElementById('sac-tab-chamados').classList.toggle('active', name==='chamados');
-  document.getElementById('sac-tab-cruzado').classList.toggle('active', name==='chamados-cruzado');
-  // Cor roxa na tab ativa
-  document.getElementById('sac-tab-chamados').style.color = name==='chamados' ? '#a78bfa' : '';
-  document.getElementById('sac-tab-chamados').style.borderBottomColor = name==='chamados' ? '#a78bfa' : '';
-  document.getElementById('sac-tab-cruzado').style.color = name==='chamados-cruzado' ? '#a78bfa' : '';
-  document.getElementById('sac-tab-cruzado').style.borderBottomColor = name==='chamados-cruzado' ? '#a78bfa' : '';
 }
 
 function switchModule(mod) {
   const isTransp = mod === 'transp';
-  // Módulos
-  document.getElementById('upload-screen').style.display = isTransp ? '' : 'none';
-  document.getElementById('dash-screen').style.display   = (isTransp && document.getElementById('dash-screen').dataset.loaded) ? '' : (isTransp ? '' : 'none');
-  document.getElementById('module-sac').style.display    = isTransp ? 'none' : '';
 
-  // Botões do menu
-  const btnT = document.getElementById('btn-transp');
-  const btnS = document.getElementById('btn-sac');
-  btnT.className = 'module-btn' + (isTransp ? ' active-transp' : '');
-  btnS.className = 'module-btn' + (!isTransp ? ' active-sac' : '');
+  // Atualiza botões do menu
+  document.getElementById('btn-transp').className = 'module-btn' + (isTransp ? ' active-transp' : '');
+  document.getElementById('btn-sac').className    = 'module-btn' + (!isTransp ? ' active-sac' : '');
 
-  // Ao abrir SAC, inicializa tabs
-  if (!isTransp) {
-    showSacTab('chamados');
-    // Esconde upload-screen quando no SAC (só mostra dash-screen se tiver dados)
-    document.getElementById('upload-screen').style.display = 'none';
-    if (all.length) document.getElementById('dash-screen').style.display = 'none';
-  } else {
-    // Volta para transportes: mostra estado correto
-    if (all.length) {
+  if (isTransp) {
+    // Mostra o estado correto do módulo de transporte
+    document.getElementById('module-sac').style.display = 'none';
+    if (all.length > 0) {
       document.getElementById('upload-screen').style.display = 'none';
-      document.getElementById('dash-screen').style.display = '';
+      document.getElementById('dash-screen').style.display   = '';
     } else {
       document.getElementById('upload-screen').style.display = '';
-      document.getElementById('dash-screen').style.display = 'none';
+      document.getElementById('dash-screen').style.display   = 'none';
     }
+  } else {
+    // Módulo SAC
+    document.getElementById('upload-screen').style.display = 'none';
+    document.getElementById('dash-screen').style.display   = 'none';
+    document.getElementById('module-sac').style.display    = '';
+    // Inicializa a aba de chamados
+    showSacTab('chamados');
   }
-}
-
-// Marca dash-screen como carregado quando dados chegam
-function markDashLoaded() {
-  document.getElementById('dash-screen').dataset.loaded = '1';
 }
 
 // ── CHAMADOS ─────────────────────────────────────────────────────────────────

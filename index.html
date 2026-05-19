@@ -306,10 +306,21 @@ footer strong { color: var(--yellow); }
       </div>
     </div>
     <h2>Painel de Gestão de Transporte</h2>
-    <p>Importe o arquivo XLSX do Relatório de Custos para visualizar os indicadores de transporte por destino e transportadora.</p>
+    <p>O painel carrega automaticamente o relatório atualizado todo dia às 7h.</p>
+
+    <!-- Status autoload -->
+    <div id="autoload-status" style="background:var(--black3);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:1rem;text-align:left">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">Carregamento automático</div>
+      <div id="autoload-msg" style="font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px">
+        <span id="autoload-spinner" style="display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--yellow);border-radius:50%;animation:spin 0.8s linear infinite"></span>
+        Buscando relatório mais recente...
+      </div>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
     <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()">
       <div class="drop-zone-icon">📂</div>
-      <p>Clique ou arraste o arquivo XLSX aqui</p>
+      <p>Ou clique para importar manualmente</p>
       <div class="hint">Destino · Transportadora · Entregas · Pedidos · Valor (R$) · Custo Estimado · Data</div>
     </div>
     <input type="file" id="fi" accept=".xlsx,.xls" style="display:none">
@@ -377,6 +388,9 @@ footer strong { color: var(--yellow); }
       <button class="tab-btn" onclick="showTab('transp')">Transportadoras</button>
       <button class="tab-btn" onclick="showTab('det')">Detalhes</button>
       <button class="tab-btn tab-critical" onclick="showTab('criticas')" id="tab-criticas">⚠ Rotas Críticas <span id="criticas-count" style="background:rgba(217,64,64,0.2);color:#f87171;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
+      <div style="width:1px;background:var(--border);margin:6px 4px;flex-shrink:0"></div>
+      <button class="tab-btn" onclick="showTab('chamados')" id="tab-chamados" style="color:var(--blue)">🎫 Chamados <span id="chamados-count" style="background:rgba(45,107,228,0.15);color:#93c5fd;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
+      <button class="tab-btn" onclick="showTab('chamados-cruzado')" style="color:var(--blue)">🔗 Chamados × Entregas</button>
     </div>
 
     <!-- TAB: CUSTOS -->
@@ -495,6 +509,106 @@ footer strong { color: var(--yellow); }
       </div>
     </div>
 
+    <!-- TAB: CHAMADOS -->
+    <div id="t-chamados" style="display:none">
+
+      <!-- Upload de chamados -->
+      <div id="chamados-upload-area" class="chart-card" style="text-align:center;padding:2rem">
+        <div style="font-size:28px;margin-bottom:12px">🎫</div>
+        <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin-bottom:8px">Base de Chamados</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:1.5rem">Importe o XLSX de chamados para visualizar os indicadores de ocorrências.</p>
+        <div class="drop-zone" id="dz-chamados" onclick="document.getElementById('fi-chamados').click()" style="max-width:420px;margin:0 auto 1rem">
+          <div class="drop-zone-icon">📂</div>
+          <p>Clique ou arraste o XLSX de chamados aqui</p>
+          <div class="hint">tipo_ticket · transportadora · cidade · status · VALOR · data_criacao</div>
+        </div>
+        <input type="file" id="fi-chamados" accept=".xlsx,.xls" style="display:none">
+      </div>
+
+      <!-- Dashboard chamados (oculto até importar) -->
+      <div id="chamados-dash" style="display:none">
+        <!-- KPIs -->
+        <div class="kpi-grid" id="ch-kpis" style="margin-bottom:1.25rem"></div>
+
+        <!-- Linha 1: por tipo + por status -->
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="chart-card">
+            <div class="chart-card-header"><h3>Chamados por tipo</h3></div>
+            <div class="chart-wrap" style="height:260px"><canvas id="c-ch-tipo"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header"><h3>Chamados por status</h3></div>
+            <div class="chart-wrap" style="height:260px"><canvas id="c-ch-status"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Ranking transportadoras -->
+        <div class="chart-card" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
+          <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Ranking de chamados por transportadora</h3>
+            <span style="font-size:11px;color:var(--text3)">Ordenado por total de chamados</span>
+          </div>
+          <div style="display:grid;grid-template-columns:40px 1fr 110px 130px 110px;gap:12px;padding:8px 24px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);background:var(--black3)">
+            <span>#</span><span>Transportadora</span><span>Chamados</span><span>Valor em risco</span><span>Pendentes</span>
+          </div>
+          <div id="ch-ranking-transp"></div>
+        </div>
+
+        <!-- Regiões críticas -->
+        <div class="chart-card" style="margin-bottom:1.25rem;padding:0;overflow:hidden">
+          <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Regiões mais críticas — top chamados por cidade</h3>
+            <div class="critical-badge" id="ch-criticas-badge">— regiões críticas</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 110px 130px 150px;gap:12px;padding:8px 24px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);background:var(--black3)">
+            <span>Cidade</span><span>Chamados</span><span>Valor em risco</span><span>Tipo predominante</span>
+          </div>
+          <div id="ch-regioes"></div>
+        </div>
+
+        <!-- Ranking por motivo/tipo detalhado -->
+        <div class="chart-card" style="padding:0;overflow:hidden">
+          <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border)">
+            <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Criticidade por tipo de chamado</h3>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 110px 130px 110px 110px;gap:12px;padding:8px 24px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);background:var(--black3)">
+            <span>Tipo de chamado</span><span>Total</span><span>Valor total</span><span>Pendentes</span><span>% Pendente</span>
+          </div>
+          <div id="ch-criticidade"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CHAMADOS × ENTREGAS -->
+    <div id="t-chamados-cruzado" style="display:none">
+      <div id="cruzado-sem-dados" class="chart-card" style="text-align:center;padding:3rem">
+        <div style="font-size:32px;margin-bottom:12px">🔗</div>
+        <p style="font-size:14px;color:var(--text2)">Importe a base de chamados na aba <strong style="color:var(--blue)">Chamados</strong> e o relatório de transporte para visualizar o cruzamento.</p>
+      </div>
+      <div id="cruzado-dash" style="display:none">
+        <div class="kpi-grid" id="cruzado-kpis" style="margin-bottom:1.25rem"></div>
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="chart-card">
+            <div class="chart-card-header"><h3>Chamados vs Entregas por transportadora</h3></div>
+            <div class="chart-wrap" style="height:280px"><canvas id="c-cruzado-transp"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-header"><h3>Chamados de falta por região</h3></div>
+            <div class="chart-wrap" style="height:280px"><canvas id="c-cruzado-falta"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-card" style="padding:0;overflow:hidden">
+          <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border)">
+            <h3 style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin:0">Tabela cruzada: transportadora — entregas × chamados × chamados de falta</h3>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 100px 110px 110px 110px 120px;gap:12px;padding:8px 24px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);background:var(--black3)">
+            <span>Transportadora</span><span>Entregas</span><span>Chamados</span><span>Faltas</span><span>% Cham/Entr</span><span>Valor em risco</span>
+          </div>
+          <div id="cruzado-tabela"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
   <footer>Painel de Gestão de Transporte · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
 </div>
@@ -509,6 +623,45 @@ const PAL_BLUE   = '#2D6BE4';
 const PAL_RED    = '#D94040';
 
 const CHART_DEFAULTS = { color: { grid: 'rgba(255,255,255,0.05)', tick: '#5a5a58' } };
+
+// ── AUTO-CARREGAMENTO DO RELATÓRIO ────────────────────────────────────────────
+async function autoLoadRelatorio() {
+  const msgEl      = document.getElementById('autoload-msg');
+  const spinnerEl  = document.getElementById('autoload-spinner');
+  const statusBox  = document.getElementById('autoload-status');
+
+  try {
+    const url = 'data/relatorio.xlsx?v=' + Date.now();
+    const resp = await fetch(url, { cache: 'no-cache' });
+
+    if (!resp.ok) throw new Error('Arquivo não encontrado');
+
+    const buf = await resp.arrayBuffer();
+
+    // Pega data de modificação do header se disponível
+    const lastMod = resp.headers.get('last-modified');
+    const dataLabel = lastMod
+      ? 'Atualizado em ' + new Date(lastMod).toLocaleString('pt-BR')
+      : 'Relatório automático';
+
+    spinnerEl.style.display = 'none';
+    msgEl.innerHTML = '<span style="color:var(--green)">✓</span> ' + dataLabel + ' — carregando painel...';
+
+    document.getElementById('header-meta').textContent = dataLabel;
+    document.getElementById('header-badge').style.display = 'flex';
+
+    processXLSX(buf, dataLabel);
+
+  } catch (e) {
+    spinnerEl.style.display = 'none';
+    statusBox.style.borderColor = 'var(--border)';
+    msgEl.innerHTML = '<span style="color:var(--text3)">—</span> <span style="color:var(--text3)">Nenhum relatório automático encontrado. Importe manualmente abaixo.</span>';
+  }
+}
+
+// Roda ao carregar a página
+window.addEventListener('DOMContentLoaded', autoLoadRelatorio);
+// ─────────────────────────────────────────────────────────────────────────────
 
 function getWeekNumber(d) {
   const date = new Date(d);
@@ -954,12 +1107,308 @@ function renderCriticas() {
 }
 
 function showTab(name) {
-  ['custos','valor','perf','transp','det','criticas'].forEach(t => {
+  ['custos','valor','perf','transp','det','criticas','chamados','chamados-cruzado'].forEach(t => {
     document.getElementById('t-'+t).style.display = t===name ? '' : 'none';
   });
-  document.querySelectorAll('.tab-btn').forEach((el, i) => {
-    el.classList.toggle('active', ['custos','valor','perf','transp','det','criticas'][i] === name);
+  document.querySelectorAll('.tab-btn').forEach(el => {
+    const onclick = el.getAttribute('onclick') || '';
+    const match = onclick.match(/showTab\('([^']+)'\)/);
+    if (match) el.classList.toggle('active', match[1] === name);
   });
+}
+
+// ── CHAMADOS ─────────────────────────────────────────────────────────────────
+let allChamados = [];
+
+document.getElementById('fi-chamados').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => processChamados(ev.target.result, f.name);
+  r.readAsArrayBuffer(f);
+});
+
+const dzCh = document.getElementById('dz-chamados');
+dzCh.addEventListener('dragover', e => { e.preventDefault(); dzCh.classList.add('drag'); });
+dzCh.addEventListener('dragleave', () => dzCh.classList.remove('drag'));
+dzCh.addEventListener('drop', e => {
+  e.preventDefault(); dzCh.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => processChamados(ev.target.result, f.name);
+  r.readAsArrayBuffer(f);
+});
+
+function processChamados(buf, name) {
+  try {
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!raw.length) return;
+
+    allChamados = raw.map(r => ({
+      id:         r['id'] || '',
+      tipo:       limparTipo(String(r['tipo_ticket'] || '')),
+      tipoRaw:    String(r['tipo_ticket'] || ''),
+      motivo:     String(r['motivo_abertura'] || r['motivo'] || ''),
+      status:     String(r['status'] || '').toUpperCase().trim(),
+      cidade:     extrairCidade(String(r['cidade'] || '')),
+      transp:     extrairTransp(String(r['transportadora'] || '')),
+      valor:      parseNum(r['VALOR'] || r['valor'] || 0),
+      dataCriacao: parseDate(r['data_criacao']),
+      dataFinal:   parseDate(r['data_finalizacao']),
+      isFalta:    String(r['tipo_ticket']||'').toLowerCase().includes('faltando'),
+      isAvaria:   String(r['tipo_ticket']||'').toLowerCase().includes('avariado'),
+      isDevolucao: String(r['tipo_ticket']||'').toLowerCase().includes('devolu'),
+    }));
+
+    document.getElementById('chamados-upload-area').style.display = 'none';
+    document.getElementById('chamados-dash').style.display = '';
+    document.getElementById('chamados-count').textContent = allChamados.length;
+
+    renderChamados();
+    renderCruzado();
+  } catch(e) { alert('Erro ao ler base de chamados: ' + e.message); }
+}
+
+function limparTipo(t) {
+  // Remove sufixos " - COM" e " - LOG"
+  return t.replace(/\s*-\s*(COM|LOG)\s*$/i, '').trim();
+}
+
+function extrairCidade(c) {
+  // "Nova Iguacu - RJ" → "Nova Iguacu"
+  return c.split(' - ')[0].trim() || c;
+}
+
+function extrairTransp(t) {
+  if (!t || t.trim() === '') return '(sem transportadora)';
+  // Remove código numérico do início: "61594 - JSR RJ..." → "JSR RJ..."
+  const m = t.match(/^\d+\s*-\s*(.+)/);
+  if (m) {
+    const nome = m[1].trim();
+    // Abreviações conhecidas
+    if (/JSR/i.test(nome)) return 'JSR';
+    if (/ALFA/i.test(nome)) return 'ALFA CARGO';
+    if (/PM.*F|PMF/i.test(nome)) return 'PM&F';
+    if (/DMD/i.test(nome)) return 'DMD';
+    if (/TRANS MP|MP TRANSP/i.test(nome)) return 'MP';
+    if (/LLE|L\.L\.E/i.test(nome)) return 'GRUPO LLE';
+    if (/CINTHYANE|ALFA.*CARGO/i.test(nome)) return 'ALFA CARGO';
+    if (/HJT|HJ EXPRESSO/i.test(nome)) return 'HJ EXPRESSO';
+    if (/2B EXPRESS/i.test(nome)) return '2B EXPRESS';
+    if (/FASSILOG/i.test(nome)) return 'FASSILOG';
+    return nome.length > 22 ? nome.substring(0,22)+'…' : nome;
+  }
+  return t.trim();
+}
+
+function renderChamados() {
+  const total    = allChamados.length;
+  const pendentes = allChamados.filter(c => c.status === 'PENDENTE').length;
+  const faltas   = allChamados.filter(c => c.isFalta).length;
+  const avarias  = allChamados.filter(c => c.isAvaria).length;
+  const valorTotal = allChamados.reduce((s,c)=>s+c.valor,0);
+
+  document.getElementById('ch-kpis').innerHTML = `
+    <div class="kpi kpi-blue"><div class="kpi-label">Total de chamados</div><div class="kpi-value">${total.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Pendentes</div><div class="kpi-value">${pendentes.toLocaleString('pt-BR')}</div><div class="kpi-sub">${total>0?Math.round(pendentes/total*100):0}% do total</div></div>
+    <div class="kpi kpi-yellow"><div class="kpi-label">Chamados de falta</div><div class="kpi-value">${faltas.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi"><div class="kpi-label">Chamados de avaria</div><div class="kpi-value">${avarias.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi kpi-yellow"><div class="kpi-label">Valor total em risco</div><div class="kpi-value" style="font-size:18px">${fmtR(valorTotal)}</div></div>
+  `;
+
+  // Gráfico por tipo
+  const byTipo = {};
+  allChamados.forEach(c => { byTipo[c.tipo] = (byTipo[c.tipo]||0)+1; });
+  const tipoEntries = Object.entries(byTipo).sort((a,b)=>b[1]-a[1]);
+  const multiColors = (n) => Array.from({length:n},(_,i)=>[PAL_YELLOW,PAL_BLUE,PAL_RED,PAL_GREEN,'#c07820','#1a4fb0','#a83232','#1a6e38'][i%8]);
+
+  if (charts['c-ch-tipo']) charts['c-ch-tipo'].destroy();
+  charts['c-ch-tipo'] = new Chart(document.getElementById('c-ch-tipo'), {
+    type: 'bar',
+    data: { labels: tipoEntries.map(e=>e[0]), datasets: [{ data: tipoEntries.map(e=>e[1]), backgroundColor: multiColors(tipoEntries.length), borderRadius:5, borderSkipped:false }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x:{ticks:{font:{size:10},color:CHART_DEFAULTS.color.tick,maxRotation:38},grid:{color:CHART_DEFAULTS.color.grid}}, y:{ticks:{font:{size:11},color:CHART_DEFAULTS.color.tick},grid:{color:CHART_DEFAULTS.color.grid}} } }
+  });
+
+  // Gráfico por status
+  const byStatus = {};
+  allChamados.forEach(c => { const s = c.status||'SEM STATUS'; byStatus[s] = (byStatus[s]||0)+1; });
+  const statusEntries = Object.entries(byStatus).sort((a,b)=>b[1]-a[1]);
+  const statusColors = statusEntries.map(([s]) => s==='PENDENTE'?PAL_RED:s==='FINALIZADO'?PAL_GREEN:s==='ATENDIMENTO'?PAL_YELLOW:PAL_BLUE);
+
+  if (charts['c-ch-status']) charts['c-ch-status'].destroy();
+  charts['c-ch-status'] = new Chart(document.getElementById('c-ch-status'), {
+    type: 'doughnut',
+    data: { labels: statusEntries.map(e=>e[0]), datasets: [{ data: statusEntries.map(e=>e[1]), backgroundColor: statusColors, borderWidth:2, borderColor:'#141414' }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{color:'#9a9a96',font:{size:12},padding:14} } } }
+  });
+
+  // Ranking transportadoras
+  const byTransp = {};
+  allChamados.forEach(c => {
+    if (!byTransp[c.transp]) byTransp[c.transp] = { total:0, pendentes:0, valor:0 };
+    byTransp[c.transp].total++;
+    if (c.status==='PENDENTE') byTransp[c.transp].pendentes++;
+    byTransp[c.transp].valor += c.valor;
+  });
+  const transpEntries = Object.entries(byTransp).sort((a,b)=>b[1].total-a[1].total);
+  const maxT = transpEntries[0] ? transpEntries[0][1].total : 1;
+
+  document.getElementById('ch-ranking-transp').innerHTML = transpEntries.map(([nome, d], i) => {
+    const pct = Math.round(d.total/maxT*100);
+    const posClass = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const pctPend = d.total>0?Math.round(d.pendentes/d.total*100):0;
+    const clsPend = pctPend>50?'b-red':pctPend>25?'b-amber':'b-green';
+    return `<div style="display:grid;grid-template-columns:40px 1fr 110px 130px 110px;gap:12px;align-items:center;padding:13px 24px;border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background='var(--black3)'" onmouseout="this.style.background=''">
+      <div class="rank-pos ${posClass}">${i+1}</div>
+      <div>
+        <div class="rank-name">${nome}</div>
+        <div class="rank-bar-wrap" style="margin-top:6px"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%;background:${i===0?PAL_RED:i===1?'#c07820':PAL_BLUE}"></div></div></div>
+      </div>
+      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:var(--text)">${d.total}</div>
+      <div style="font-family:'Sora',sans-serif;font-size:13px;color:var(--yellow)">${fmtR(d.valor)}</div>
+      <div><span class="badge ${clsPend}">${d.pendentes} pend.</span></div>
+    </div>`;
+  }).join('');
+
+  // Regiões críticas
+  const byCidade = {};
+  allChamados.forEach(c => {
+    if (!byCidade[c.cidade]) byCidade[c.cidade] = { total:0, valor:0, tipos:{} };
+    byCidade[c.cidade].total++;
+    byCidade[c.cidade].valor += c.valor;
+    byCidade[c.cidade].tipos[c.tipo] = (byCidade[c.cidade].tipos[c.tipo]||0)+1;
+  });
+  const cidadeEntries = Object.entries(byCidade).sort((a,b)=>b[1].total-a[1].total).slice(0,15);
+  const mediana = cidadeEntries.length ? cidadeEntries[Math.floor(cidadeEntries.length/2)][1].total : 0;
+  const nCriticas = cidadeEntries.filter(([,d])=>d.total>mediana).length;
+  document.getElementById('ch-criticas-badge').textContent = nCriticas + ' regiões críticas';
+
+  document.getElementById('ch-regioes').innerHTML = cidadeEntries.map(([cidade, d]) => {
+    const topTipo = Object.entries(d.tipos).sort((a,b)=>b[1]-a[1])[0];
+    const isCritica = d.total > mediana;
+    return `<div style="display:grid;grid-template-columns:1fr 110px 130px 150px;gap:12px;align-items:center;padding:12px 24px;border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background='var(--black3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:500;font-size:13px">${cidade} ${isCritica?'<span style="font-size:10px;color:var(--red);margin-left:4px">▲ CRÍTICA</span>':''}</div>
+      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:${isCritica?'var(--red)':'var(--text)'}">${d.total}</div>
+      <div style="font-size:13px;color:var(--yellow)">${fmtR(d.valor)}</div>
+      <div style="font-size:12px;color:var(--text2)">${topTipo?topTipo[0]:'—'}</div>
+    </div>`;
+  }).join('');
+
+  // Criticidade por tipo
+  const byTipoDetalhe = {};
+  allChamados.forEach(c => {
+    if (!byTipoDetalhe[c.tipo]) byTipoDetalhe[c.tipo] = { total:0, valor:0, pendentes:0 };
+    byTipoDetalhe[c.tipo].total++;
+    byTipoDetalhe[c.tipo].valor += c.valor;
+    if (c.status==='PENDENTE') byTipoDetalhe[c.tipo].pendentes++;
+  });
+  const tipoDetalheEntries = Object.entries(byTipoDetalhe).sort((a,b)=>b[1].total-a[1].total);
+
+  document.getElementById('ch-criticidade').innerHTML = tipoDetalheEntries.map(([tipo, d]) => {
+    const pctPend = d.total>0 ? Math.round(d.pendentes/d.total*100) : 0;
+    const cls = pctPend>60?'b-red':pctPend>30?'b-amber':'b-green';
+    const isFalta = tipo.toLowerCase().includes('faltando');
+    return `<div style="display:grid;grid-template-columns:1fr 110px 130px 110px 110px;gap:12px;align-items:center;padding:13px 24px;border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background='var(--black3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:500;font-size:13px">${tipo} ${isFalta?'<span style="font-size:10px;background:rgba(245,166,35,0.15);color:var(--yellow);padding:2px 7px;border-radius:99px;margin-left:4px">FALTA</span>':''}</div>
+      <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:var(--text)">${d.total}</div>
+      <div style="font-family:'Sora',sans-serif;font-size:13px;color:var(--yellow)">${fmtR(d.valor)}</div>
+      <div style="font-size:13px;color:var(--text2)">${d.pendentes}</div>
+      <div><span class="badge ${cls}">${pctPend}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderCruzado() {
+  if (!allChamados.length || !fd.length) {
+    document.getElementById('cruzado-sem-dados').style.display = '';
+    document.getElementById('cruzado-dash').style.display = 'none';
+    return;
+  }
+  document.getElementById('cruzado-sem-dados').style.display = 'none';
+  document.getElementById('cruzado-dash').style.display = '';
+
+  // Agrupa entregas por transportadora
+  const entByTransp = {};
+  fd.forEach(r => {
+    const t = r.transp || '(sem)';
+    if (!entByTransp[t]) entByTransp[t] = { entregas:0, ped:0 };
+    entByTransp[t].entregas += r.ent;
+    entByTransp[t].ped += r.ped;
+  });
+
+  // Agrupa chamados por transportadora
+  const chByTransp = {};
+  allChamados.forEach(c => {
+    const t = c.transp;
+    if (!chByTransp[t]) chByTransp[t] = { total:0, faltas:0, valor:0 };
+    chByTransp[t].total++;
+    if (c.isFalta) chByTransp[t].faltas++;
+    chByTransp[t].valor += c.valor;
+  });
+
+  // Todas as transportadoras
+  const todasTransp = [...new Set([...Object.keys(entByTransp), ...Object.keys(chByTransp)])].filter(t=>t!=='(sem transportadora)');
+
+  const cruzado = todasTransp.map(t => ({
+    transp: t,
+    entregas: entByTransp[t]?.entregas || 0,
+    chamados: chByTransp[t]?.total || 0,
+    faltas:   chByTransp[t]?.faltas || 0,
+    valor:    chByTransp[t]?.valor || 0,
+  })).filter(r=>r.entregas>0||r.chamados>0).sort((a,b)=>b.chamados-a.chamados);
+
+  const totalEntregas = cruzado.reduce((s,r)=>s+r.entregas,0);
+  const totalChamados = allChamados.length;
+  const totalFaltas   = allChamados.filter(c=>c.isFalta).length;
+  const taxaGeral     = totalEntregas>0 ? (totalChamados/totalEntregas*100).toFixed(1) : 0;
+
+  document.getElementById('cruzado-kpis').innerHTML = `
+    <div class="kpi kpi-blue"><div class="kpi-label">Total entregas</div><div class="kpi-value">${totalEntregas.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi kpi-red"><div class="kpi-label">Total chamados</div><div class="kpi-value">${totalChamados.toLocaleString('pt-BR')}</div></div>
+    <div class="kpi kpi-yellow"><div class="kpi-label">Taxa geral cham./entr.</div><div class="kpi-value">${taxaGeral}%</div></div>
+    <div class="kpi"><div class="kpi-label">Chamados de falta</div><div class="kpi-value">${totalFaltas.toLocaleString('pt-BR')}</div><div class="kpi-sub">${totalChamados>0?Math.round(totalFaltas/totalChamados*100):0}% dos chamados</div></div>
+  `;
+
+  // Gráfico chamados vs entregas por transportadora
+  const top10 = cruzado.slice(0,10);
+  if (charts['c-cruzado-transp']) charts['c-cruzado-transp'].destroy();
+  charts['c-cruzado-transp'] = new Chart(document.getElementById('c-cruzado-transp'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(r=>r.transp),
+      datasets: [
+        { label: 'Entregas', data: top10.map(r=>r.entregas), backgroundColor: 'rgba(45,107,228,0.7)', borderRadius:4 },
+        { label: 'Chamados', data: top10.map(r=>r.chamados), backgroundColor: 'rgba(217,64,64,0.8)', borderRadius:4 }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#9a9a96',font:{size:11}}}}, scales: { x:{ticks:{font:{size:10},color:CHART_DEFAULTS.color.tick,maxRotation:38},grid:{color:CHART_DEFAULTS.color.grid}}, y:{ticks:{font:{size:11},color:CHART_DEFAULTS.color.tick},grid:{color:CHART_DEFAULTS.color.grid}} } }
+  });
+
+  // Chamados de falta por região
+  const faltasByCidade = {};
+  allChamados.filter(c=>c.isFalta).forEach(c => { faltasByCidade[c.cidade]=(faltasByCidade[c.cidade]||0)+1; });
+  const faltaEntries = Object.entries(faltasByCidade).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if (charts['c-cruzado-falta']) charts['c-cruzado-falta'].destroy();
+  charts['c-cruzado-falta'] = new Chart(document.getElementById('c-cruzado-falta'), {
+    type: 'bar',
+    data: { labels: faltaEntries.map(e=>e[0]), datasets:[{ data: faltaEntries.map(e=>e[1]), backgroundColor: PAL_YELLOW, borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x:{ticks:{font:{size:10},color:CHART_DEFAULTS.color.tick,maxRotation:38,autoSkip:false},grid:{color:CHART_DEFAULTS.color.grid}}, y:{ticks:{font:{size:11},color:CHART_DEFAULTS.color.tick},grid:{color:CHART_DEFAULTS.color.grid}} } }
+  });
+
+  // Tabela cruzada
+  document.getElementById('cruzado-tabela').innerHTML = cruzado.map(r => {
+    const taxa = r.entregas>0 ? (r.chamados/r.entregas*100).toFixed(1) : '—';
+    const cls = parseFloat(taxa)>10?'b-red':parseFloat(taxa)>5?'b-amber':'b-green';
+    return `<div style="display:grid;grid-template-columns:1fr 100px 110px 110px 110px 120px;gap:12px;align-items:center;padding:12px 24px;border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background='var(--black3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:500;font-size:13px">${r.transp}</div>
+      <div style="font-size:13px;color:var(--blue)">${r.entregas.toLocaleString('pt-BR')}</div>
+      <div style="font-size:13px;color:var(--text)">${r.chamados}</div>
+      <div style="font-size:13px;color:var(--yellow)">${r.faltas}</div>
+      <div><span class="badge ${cls}">${taxa}%</span></div>
+      <div style="font-size:13px;color:var(--yellow)">${fmtR(r.valor)}</div>
+    </div>`;
+  }).join('');
 }
 
 function reset() {

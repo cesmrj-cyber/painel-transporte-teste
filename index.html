@@ -277,17 +277,70 @@ footer strong { color: var(--yellow); }
   .critical-row-head { grid-template-columns: 1fr 90px 110px; }
   .cr-hide { display: none; }
 }
+
+/* ── MODULE NAV ── */
+.module-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 28px;
+}
+.module-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 16px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text3);
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.module-btn:hover { color: var(--text2); background: var(--black3); }
+.module-btn.active-transp {
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  border-color: rgba(245,166,35,0.2);
+}
+.module-btn.active-sac {
+  color: #a78bfa;
+  background: rgba(167,139,250,0.1);
+  border-color: rgba(167,139,250,0.2);
+}
+.module-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Módulo SAC */
+#module-sac { display: none; }
+.sac-upload-area { max-width: 520px; margin: 0 auto; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-mark"><span></span><span></span><span></span></div>
-    <div class="logo-text">
-      <span class="grupo">Grupo</span>
-      <span class="lle">LLE</span>
+  <div style="display:flex;align-items:center">
+    <div class="logo">
+      <div class="logo-mark"><span></span><span></span><span></span></div>
+      <div class="logo-text">
+        <span class="grupo">Grupo</span>
+        <span class="lle">LLE</span>
+      </div>
     </div>
+    <nav class="module-nav">
+      <button class="module-btn active-transp" id="btn-transp" onclick="switchModule('transp')">
+        <span class="module-icon">🚚</span> Transportes
+      </button>
+      <button class="module-btn" id="btn-sac" onclick="switchModule('sac')">
+        <span class="module-icon">🎫</span> SAC
+      </button>
+    </nav>
   </div>
   <div class="header-right">
     <div class="header-meta" id="header-meta"></div>
@@ -388,9 +441,6 @@ footer strong { color: var(--yellow); }
       <button class="tab-btn" onclick="showTab('transp')">Transportadoras</button>
       <button class="tab-btn" onclick="showTab('det')">Detalhes</button>
       <button class="tab-btn tab-critical" onclick="showTab('criticas')" id="tab-criticas">⚠ Rotas Críticas <span id="criticas-count" style="background:rgba(217,64,64,0.2);color:#f87171;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
-      <div style="width:1px;background:var(--border);margin:6px 4px;flex-shrink:0"></div>
-      <button class="tab-btn" onclick="showTab('chamados')" id="tab-chamados" style="color:var(--blue)">🎫 Chamados <span id="chamados-count" style="background:rgba(45,107,228,0.15);color:#93c5fd;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px"></span></button>
-      <button class="tab-btn" onclick="showTab('chamados-cruzado')" style="color:var(--blue)">🔗 Chamados × Entregas</button>
     </div>
 
     <!-- TAB: CUSTOS -->
@@ -609,8 +659,30 @@ footer strong { color: var(--yellow); }
       </div>
     </div>
 
-  </div>
+  </div><!-- /.container -->
   <footer>Painel de Gestão de Transporte · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
+</div><!-- /#dash-screen -->
+
+<!-- ── MÓDULO SAC ──────────────────────────────────────────────────────────── -->
+<div id="module-sac" style="display:none">
+  <div class="container">
+    <div class="dash-header">
+      <div>
+        <h1>SAC — Chamados & Ocorrências</h1>
+        <div class="sub" id="sac-sub-info">Importe a base de chamados para começar</div>
+      </div>
+    </div>
+
+    <!-- TABS SAC -->
+    <div class="tabs">
+      <button class="tab-btn active" id="sac-tab-chamados" onclick="showSacTab('chamados')" style="color:#a78bfa;border-bottom-color:#a78bfa">Chamados SAC</button>
+      <button class="tab-btn" id="sac-tab-cruzado" onclick="showSacTab('chamados-cruzado')">Chamados × Entregas</button>
+    </div>
+
+    <!-- Conteúdo dinâmico SAC (os divs t-chamados e t-chamados-cruzado são movidos aqui pelo JS) -->
+    <div id="sac-tab-content"></div>
+  </div>
+  <footer>SAC · <strong>Grupo LLE</strong> · Dados processados localmente, sem envio para servidores.</footer>
 </div>
 
 <script>
@@ -837,6 +909,7 @@ function init() {
 
   document.getElementById('upload-screen').style.display = 'none';
   document.getElementById('dash-screen').style.display = 'block';
+  markDashLoaded();
   applyFilter();
 }
 
@@ -1107,14 +1180,70 @@ function renderCriticas() {
 }
 
 function showTab(name) {
-  ['custos','valor','perf','transp','det','criticas','chamados','chamados-cruzado'].forEach(t => {
+  ['custos','valor','perf','transp','det','criticas'].forEach(t => {
     document.getElementById('t-'+t).style.display = t===name ? '' : 'none';
   });
-  document.querySelectorAll('.tab-btn').forEach(el => {
+  document.querySelectorAll('#dash-screen .tab-btn').forEach(el => {
     const onclick = el.getAttribute('onclick') || '';
     const match = onclick.match(/showTab\('([^']+)'\)/);
     if (match) el.classList.toggle('active', match[1] === name);
   });
+}
+
+function showSacTab(name) {
+  // Move os divs de chamados para dentro do sac-tab-content
+  const content = document.getElementById('sac-tab-content');
+  ['chamados','chamados-cruzado'].forEach(t => {
+    const el = document.getElementById('t-'+t);
+    if (el) {
+      content.appendChild(el);
+      el.style.display = t===name ? '' : 'none';
+    }
+  });
+  // Atualiza tabs SAC
+  document.getElementById('sac-tab-chamados').classList.toggle('active', name==='chamados');
+  document.getElementById('sac-tab-cruzado').classList.toggle('active', name==='chamados-cruzado');
+  // Cor roxa na tab ativa
+  document.getElementById('sac-tab-chamados').style.color = name==='chamados' ? '#a78bfa' : '';
+  document.getElementById('sac-tab-chamados').style.borderBottomColor = name==='chamados' ? '#a78bfa' : '';
+  document.getElementById('sac-tab-cruzado').style.color = name==='chamados-cruzado' ? '#a78bfa' : '';
+  document.getElementById('sac-tab-cruzado').style.borderBottomColor = name==='chamados-cruzado' ? '#a78bfa' : '';
+}
+
+function switchModule(mod) {
+  const isTransp = mod === 'transp';
+  // Módulos
+  document.getElementById('upload-screen').style.display = isTransp ? '' : 'none';
+  document.getElementById('dash-screen').style.display   = (isTransp && document.getElementById('dash-screen').dataset.loaded) ? '' : (isTransp ? '' : 'none');
+  document.getElementById('module-sac').style.display    = isTransp ? 'none' : '';
+
+  // Botões do menu
+  const btnT = document.getElementById('btn-transp');
+  const btnS = document.getElementById('btn-sac');
+  btnT.className = 'module-btn' + (isTransp ? ' active-transp' : '');
+  btnS.className = 'module-btn' + (!isTransp ? ' active-sac' : '');
+
+  // Ao abrir SAC, inicializa tabs
+  if (!isTransp) {
+    showSacTab('chamados');
+    // Esconde upload-screen quando no SAC (só mostra dash-screen se tiver dados)
+    document.getElementById('upload-screen').style.display = 'none';
+    if (all.length) document.getElementById('dash-screen').style.display = 'none';
+  } else {
+    // Volta para transportes: mostra estado correto
+    if (all.length) {
+      document.getElementById('upload-screen').style.display = 'none';
+      document.getElementById('dash-screen').style.display = '';
+    } else {
+      document.getElementById('upload-screen').style.display = '';
+      document.getElementById('dash-screen').style.display = 'none';
+    }
+  }
+}
+
+// Marca dash-screen como carregado quando dados chegam
+function markDashLoaded() {
+  document.getElementById('dash-screen').dataset.loaded = '1';
 }
 
 // ── CHAMADOS ─────────────────────────────────────────────────────────────────
@@ -1163,6 +1292,7 @@ function processChamados(buf, name) {
 
     document.getElementById('chamados-upload-area').style.display = 'none';
     document.getElementById('chamados-dash').style.display = '';
+    document.getElementById('sac-sub-info').textContent = allChamados.length + ' chamados carregados · ' + name;
     document.getElementById('chamados-count').textContent = allChamados.length;
 
     renderChamados();
